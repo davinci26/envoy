@@ -166,7 +166,10 @@ SimulatedTimeSystemHelper::Alarm::Alarm::~Alarm() {
 }
 
 void SimulatedTimeSystemHelper::Alarm::Alarm::disableTimer() {
+<<<<<<< HEAD
   cb_->cancel();
+=======
+>>>>>>> parent of aeaf585fdc... [test] Fix handling of Timer::disableTimer when using simulated time (#11563)
   absl::MutexLock lock(&time_system_.mutex_);
   disableTimerLockHeld();
 }
@@ -176,26 +179,19 @@ void SimulatedTimeSystemHelper::Alarm::Alarm::disableTimerLockHeld() {
     time_system_.removeAlarmLockHeld(this);
     armed_ = false;
   }
-  if (pending_) {
-    pending_ = false;
-    time_system_.decPendingLockHeld();
-  }
 }
 
 void SimulatedTimeSystemHelper::Alarm::Alarm::enableHRTimer(
+<<<<<<< HEAD
     const std::chrono::microseconds& duration, const ScopeTrackedObject* /*scope*/) {
   if (duration.count() != 0) {
     disableTimer();
   }
+=======
+    const std::chrono::microseconds& duration, const ScopeTrackedObject* scope) {
+>>>>>>> parent of aeaf585fdc... [test] Fix handling of Timer::disableTimer when using simulated time (#11563)
   absl::MutexLock lock(&time_system_.mutex_);
-  if (pending_) {
-    // Calling enableTimer on a timer that is already pending is a no-op. Timer will still fire
-    // based on the original time it was scheduled.
-    return;
-  } else if (armed_) {
-    disableTimerLockHeld();
-  }
-
+  disableTimerLockHeld();
   armed_ = true;
   if (duration.count() == 0) {
     activateLockHeld();

@@ -25,13 +25,13 @@ if [ ! -e "/$drive/$drive" ]; then
 fi
 
 BAZEL_STARTUP_OPTIONS="--output_base=c:/_eb"
-BAZEL_BUILD_OPTIONS="-c opt --config=msvc-cl --show_task_finish --verbose_failures \
+BAZEL_BUILD_OPTIONS="-c dbg --config=msvc-cl --show_task_finish --verbose_failures \
   --test_output=errors ${BAZEL_BUILD_EXTRA_OPTIONS} ${BAZEL_EXTRA_TEST_OPTIONS}"
 
-bazel ${BAZEL_STARTUP_OPTIONS} build ${BAZEL_BUILD_OPTIONS} //source/exe:envoy-static --build_tag_filters=-skip_on_windows
+# bazel ${BAZEL_STARTUP_OPTIONS} build ${BAZEL_BUILD_OPTIONS} //source/exe:envoy-static --build_tag_filters=-skip_on_windows
 
 # Test invocations of known-working tests on Windows
-bazel ${BAZEL_STARTUP_OPTIONS} test ${BAZEL_BUILD_OPTIONS} //test/... --test_tag_filters=-skip_on_windows,-fails_on_windows --build_tests_only
+bazel ${BAZEL_STARTUP_OPTIONS} test ${BAZEL_BUILD_OPTIONS} //test/common/network:connection_impl_test
 
 # Build tests that are failing to ensure no regressions
-bazel ${BAZEL_STARTUP_OPTIONS} build ${BAZEL_BUILD_OPTIONS} //test/... --test_tag_filters=-skip_on_windows,fails_on_windows --build_tests_only
+# bazel ${BAZEL_STARTUP_OPTIONS} build ${BAZEL_BUILD_OPTIONS} //test/... --test_tag_filters=-skip_on_windows,fails_on_windows --build_tests_only
