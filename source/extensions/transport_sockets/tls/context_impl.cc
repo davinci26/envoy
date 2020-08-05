@@ -52,6 +52,36 @@ bool cbsContainsU16(CBS& cbs, uint16_t n) {
   return false;
 }
 
+void apps_ssl_info_callback(const SSL *s, int where, int ret) {
+  const char *str;
+  int w = where & ~SSL_ST_MASK;
+
+  std::string srv = "client";
+  if ( SSL_is_server(s)) {
+    srv = "server";
+  }
+
+  if (w & SSL_ST_CONNECT)
+      str = "SSL_connect";
+  else if (w & SSL_ST_ACCEPT)
+      str = "SSL_accept";
+  else
+      str = "undefined";
+  
+  if (where & SSL_CB_LOOP) {
+    ENVOY_LOG_MISC(debug, "[{}] {}:{}", srv, str, SSL_state_string_long(s));
+  } else if (where & SSL_CB_ALERT) {
+      str = (where & SSL_CB_READ) ? "read" : "write";
+      ENVOY_LOG_MISC(debug, "[{}] SSL3 alert: {}:{}:{}", srv, str, SSL_alert_type_string_long(ret), SSL_alert_desc_string_long(ret));
+  } else if (where & SSL_CB_EXIT) {
+      if (ret == 0) {
+        ENVOY_LOG_MISC(debug, "[{}] {}:failed in {}", srv, str, SSL_state_string_long(s));
+      } else if (ret < 0) {
+        ENVOY_LOG_MISC(debug, "[{}] {}:error in {}", srv, str, SSL_state_string_long(s));
+      }
+  }
+}
+
 } // namespace
 
 int ContextImpl::sslExtendedSocketInfoIndex() {
@@ -80,7 +110,8 @@ ContextImpl::ContextImpl(Stats::Scope& scope, const Envoy::Ssl::ContextConfig& c
 
   for (auto& ctx : tls_contexts_) {
     ctx.ssl_ctx_.reset(SSL_CTX_new(TLS_method()));
-
+    SSL_CTX_set_info_callback(ctx.ssl_ctx_.get(), apps_ssl_info_callback);
+    
     int rc = SSL_CTX_set_app_data(ctx.ssl_ctx_.get(), this);
     RELEASE_ASSERT(rc == 1, Utility::getLastCryptoError().value_or(""));
 
@@ -541,6 +572,7 @@ int ContextImpl::verifyCallback(X509_STORE_CTX* store_ctx, void* arg) {
 
     if (ret <= 0) {
       impl->stats_.fail_verify_error_.inc();
+      X509_STORE_CTX_set_error(store_ctx, ret);
       return impl->allow_untrusted_certificate_ ? 1 : ret;
     }
   }

@@ -15,6 +15,10 @@ envoy_cc_test(
         "ssl_certs_test.h",
         "ssl_socket_test.cc",
     ],
+    args = [
+        "-l trace",
+        "--gtest_filter=*IpVersions/SslSocketTest.FailedClientCertificateExpirationVerification/IPv4*"
+    ],
     data = [
         "gen_unittest_certs.sh",
         # TODO(mattklein123): We should consolidate all of our test certs in a single place as
