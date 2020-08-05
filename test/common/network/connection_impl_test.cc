@@ -810,6 +810,11 @@ TEST_P(ConnectionImplTest, ReadWatermarks) {
   client_connection_->addReadFilter(client_read_filter);
   connect();
 
+  auto on_filter_data_exit = [&](Buffer::Instance&, bool) -> FilterStatus {
+          dispatcher_->exit();
+          return FilterStatus::StopIteration;
+        };
+
   EXPECT_FALSE(testClientConnection()->readBuffer().highWatermarkTriggered());
   EXPECT_TRUE(client_connection_->readEnabled());
   // Add 4 bytes to the buffer and verify the connection becomes read disabled.
@@ -817,10 +822,7 @@ TEST_P(ConnectionImplTest, ReadWatermarks) {
     Buffer::OwnedImpl buffer("data");
     server_connection_->write(buffer, false);
     EXPECT_CALL(*client_read_filter, onData(_, false))
-        .WillOnce(Invoke([&](Buffer::Instance&, bool) -> FilterStatus {
-          dispatcher_->exit();
-          return FilterStatus::StopIteration;
-        }));
+        .WillOnce(Invoke(on_filter_data_exit));
     dispatcher_->run(Event::Dispatcher::RunType::Block);
 
     EXPECT_TRUE(testClientConnection()->readBuffer().highWatermarkTriggered());
@@ -844,10 +846,7 @@ TEST_P(ConnectionImplTest, ReadWatermarks) {
     Buffer::OwnedImpl buffer("bye");
     server_connection_->write(buffer, false);
     EXPECT_CALL(*client_read_filter, onData(_, false))
-        .WillOnce(Invoke([&](Buffer::Instance&, bool) -> FilterStatus {
-          dispatcher_->exit();
-          return FilterStatus::StopIteration;
-        }));
+        .WillOnce(Invoke(on_filter_data_exit));
     dispatcher_->run(Event::Dispatcher::RunType::Block);
 
     EXPECT_TRUE(testClientConnection()->readBuffer().highWatermarkTriggered());
@@ -866,7 +865,7 @@ TEST_P(ConnectionImplTest, ReadWatermarks) {
     EXPECT_CALL(*client_read_filter, onData(_, false)).Times(0);
     dispatcher_->run(Event::Dispatcher::RunType::NonBlock);
   }
-
+  
   // Now read enable again.
   // Inside the onData call, readDisable and readEnable. This should trigger
   // another kick on the next dispatcher loop, so onData gets called twice.
@@ -879,8 +878,8 @@ TEST_P(ConnectionImplTest, ReadWatermarks) {
           client_connection_->readDisable(false);
           return FilterStatus::StopIteration;
         }))
-        .WillRepeatedly(Return(FilterStatus::StopIteration));
-    dispatcher_->run(Event::Dispatcher::RunType::NonBlock);
+        .WillRepeatedly(Invoke(on_filter_data_exit));
+    dispatcher_->run(Event::Dispatcher::RunType::Block);
   }
 
   // Test the same logic for dispatched_buffered_data from the
@@ -890,10 +889,7 @@ TEST_P(ConnectionImplTest, ReadWatermarks) {
     Buffer::OwnedImpl buffer("bye");
     server_connection_->write(buffer, false);
     EXPECT_CALL(*client_read_filter, onData(_, false))
-        .WillOnce(Invoke([&](Buffer::Instance&, bool) -> FilterStatus {
-          dispatcher_->exit();
-          return FilterStatus::StopIteration;
-        }));
+        .WillOnce(Invoke(on_filter_data_exit));
     dispatcher_->run(Event::Dispatcher::RunType::Block);
     EXPECT_TRUE(testClientConnection()->readBuffer().highWatermarkTriggered());
     EXPECT_FALSE(client_connection_->readEnabled());
@@ -911,8 +907,8 @@ TEST_P(ConnectionImplTest, ReadWatermarks) {
           client_connection_->readDisable(false);
           return FilterStatus::StopIteration;
         }))
-        .WillRepeatedly(Return(FilterStatus::StopIteration));
-    dispatcher_->run(Event::Dispatcher::RunType::NonBlock);
+        .WillRepeatedly(Invoke(on_filter_data_exit));
+    dispatcher_->run(Event::Dispatcher::RunType::Block);
   }
 
   disconnect(true);
