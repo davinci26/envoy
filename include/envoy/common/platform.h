@@ -238,8 +238,8 @@ typedef int os_h_t;
 #define SOCKET_ERROR_INVAL EINVAL
 #define SOCKET_ERROR_ADDR_IN_USE EADDRINUSE
 
-#define HANDLE_ERROR_PERM ERROR_ACCESS_DENIED
-#define HANDLE_ERROR_INVALID ERROR_INVALID_HANDLE
+#define HANDLE_ERROR_PERM EPERM
+#define HANDLE_ERROR_INVALID EBADF
 
 namespace Platform {
 constexpr absl::string_view null_device_path{"/dev/null"};

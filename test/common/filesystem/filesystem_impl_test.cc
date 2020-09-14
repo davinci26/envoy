@@ -344,7 +344,11 @@ TEST_F(FileSystemImplTest, ExistingReadOnlyFileAndWrite) {
     std::string data(" new data");
     const Api::IoCallSizeResult result = file->write(data);
     EXPECT_TRUE(result.rc_ < 0);
+#ifdef WIN32
     EXPECT_EQ(IoFileError::IoErrorCode::Permission, result.err_->getErrorCode());
+#else
+    EXPECT_EQ(IoFileError::IoErrorCode::BadFd, result.err_->getErrorCode());
+#endif
   }
 
   auto contents = TestEnvironment::readFileToStringForTest(file_path);
