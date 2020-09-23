@@ -25,8 +25,17 @@ A simple way to achieve this is via the `Docker Desktop <https://www.docker.com/
 
 **Step 2: Clone the Envoy repository and start all of our containers**
 
-If you have not cloned the Envoy repository, clone it with ``git clone git@github.com:envoyproxy/envoy``
-or ``git clone https://github.com/envoyproxy/envoy.git``.
+If you have not cloned the Envoy repo, clone it with:
+
+.. tabs::
+
+   .. code-tab:: console HTTPS
+
+      git clone https://github.com/envoyproxy/envoy.git
+
+   .. code-tab:: console SSH
+
+      git clone git@github.com:envoyproxy/envoy
 
 To build this sandbox example and start the example services, run the following commands::
 
