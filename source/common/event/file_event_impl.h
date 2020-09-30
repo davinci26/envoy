@@ -22,6 +22,7 @@ public:
   // Event::FileEvent
   void activate(uint32_t events) override;
   void setEnabled(uint32_t events) override;
+  uint32_t getEnabled() override {return events_;}
 
 private:
   void assignEvents(uint32_t events, event_base* base);
@@ -40,6 +41,9 @@ private:
   // events scheduled via activate are evaluated in the next iteration of the event loop after
   // polling and activating new fd events.
   const bool activate_fd_events_next_event_loop_;
+
+  // Enabled events for this fd.
+  uint32_t events_;
 };
 } // namespace Event
 } // namespace Envoy

@@ -23,7 +23,7 @@ FileEventImpl::FileEventImpl(DispatcherImpl& dispatcher, os_fd_t fd, FileReadyCb
           Runtime::LoaderSingleton::getExisting()
               ? Runtime::runtimeFeatureEnabled(
                     "envoy.reloadable_features.activate_fds_next_event_loop")
-              : true) {
+              : true), events_(events) {
   // Treat the lack of a valid fd (which in practice should only happen if we run out of FDs) as
   // an OOM condition and just crash.
   RELEASE_ASSERT(SOCKET_VALID(fd), "");
@@ -122,6 +122,7 @@ void FileEventImpl::setEnabled(uint32_t events) {
   event_del(&raw_event_);
   assignEvents(events, base);
   event_add(&raw_event_, nullptr);
+  events_ = events;
 }
 
 void FileEventImpl::mergeInjectedEventsAndRunCb(uint32_t events) {

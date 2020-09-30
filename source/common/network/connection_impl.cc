@@ -525,6 +525,10 @@ void ConnectionImpl::onFileEvent(uint32_t events) {
   }
 
   if (events & Event::FileReadyType::Write) {
+    auto prv_events = file_event_->getEnabled();
+    auto new_events = prv_events & ~Event::FileReadyType::Write;
+    ENVOY_CONN_LOG(debug, "new events {}", *this, new_events);
+    file_event_->setEnabled(new_events);
     onWriteReady();
   }
 
