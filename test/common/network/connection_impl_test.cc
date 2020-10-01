@@ -1039,6 +1039,7 @@ TEST_P(ConnectionImplTest, WatermarkFuzzing) {
   TestThreadsafeSingletonInjector<Api::OsSysCallsImpl> os_calls(&os_sys_calls);
   ON_CALL(os_sys_calls, writev(_, _, _))
       .WillByDefault(Invoke([&](os_fd_t, const iovec*, int) -> Api::SysCallSizeResult {
+        os_calls.~TestThreadsafeSingletonInjector();
         return {-1, SOCKET_ERROR_AGAIN};
       }));
   ON_CALL(*client_write_buffer_, drain(_))
