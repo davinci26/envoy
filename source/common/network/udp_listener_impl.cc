@@ -31,7 +31,7 @@ namespace Network {
 UdpListenerImpl::UdpListenerImpl(Event::DispatcherImpl& dispatcher, SocketSharedPtr socket,
                                  UdpListenerCallbacks& cb, TimeSource& time_source)
     : BaseListenerImpl(dispatcher, std::move(socket)), cb_(cb), time_source_(time_source) {
-  file_event_ = socket_->ioHandle().createFileEvent(
+  socket_->ioHandle().createFileEvent(
       dispatcher, [this](uint32_t events) -> void { onSocketEvent(events); },
       Event::PlatformDefaultTriggerType, Event::FileReadyType::Read | Event::FileReadyType::Write);
 
@@ -44,18 +44,15 @@ UdpListenerImpl::UdpListenerImpl(Event::DispatcherImpl& dispatcher, SocketShared
   }
 }
 
-UdpListenerImpl::~UdpListenerImpl() {
-  disableEvent();
-  file_event_.reset();
-}
+UdpListenerImpl::~UdpListenerImpl() { disableEvent(); }
 
 void UdpListenerImpl::disable() { disableEvent(); }
 
 void UdpListenerImpl::enable() {
-  file_event_->setEnabled(Event::FileReadyType::Read | Event::FileReadyType::Write);
+  socket_->ioHandle().enableFileEvents(Event::FileReadyType::Read | Event::FileReadyType::Write);
 }
 
-void UdpListenerImpl::disableEvent() { file_event_->setEnabled(0); }
+void UdpListenerImpl::disableEvent() { socket_->ioHandle().enableFileEvents(0); }
 
 void UdpListenerImpl::onSocketEvent(short flags) {
   ASSERT((flags & (Event::FileReadyType::Read | Event::FileReadyType::Write)));

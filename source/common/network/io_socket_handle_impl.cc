@@ -53,6 +53,7 @@ in_addr addressFromMessage(const cmsghdr& cmsg) {
 namespace Network {
 
 IoSocketHandleImpl::~IoSocketHandleImpl() {
+  ENVOY_LOG_MISC(debug, "Destructing socket handle");
   if (SOCKET_VALID(fd_)) {
     IoSocketHandleImpl::close();
   }
@@ -62,6 +63,9 @@ Api::IoCallUint64Result IoSocketHandleImpl::close() {
   ASSERT(SOCKET_VALID(fd_));
   const int rc = Api::OsSysCallsSingleton::get().close(fd_).rc_;
   SET_SOCKET_INVALID(fd_);
+  if (file_event_) {
+    file_event_.reset();
+  }
   return Api::IoCallUint64Result(rc, Api::IoErrorPtr(nullptr, IoSocketError::deleteIoError));
 }
 
@@ -80,8 +84,14 @@ Api::IoCallUint64Result IoSocketHandleImpl::readv(uint64_t max_length, Buffer::R
     num_bytes_to_read += slice_length;
   }
   ASSERT(num_bytes_to_read <= max_length);
-  return sysCallResultToIoCallResult(Api::OsSysCallsSingleton::get().readv(
+  auto result = sysCallResultToIoCallResult(Api::OsSysCallsSingleton::get().readv(
       fd_, iov.begin(), static_cast<int>(num_slices_to_read)));
+
+  if (!result.ok() && result.err_->getErrorCode() == Api::IoError::IoErrorCode::Again) {
+    appendEvents(Event::FileReadyType::Read);
+  }
+
+  return result;
 }
 
 Api::IoCallUint64Result IoSocketHandleImpl::read(Buffer::Instance& buffer, uint64_t max_length) {
@@ -99,6 +109,10 @@ Api::IoCallUint64Result IoSocketHandleImpl::read(Buffer::Instance& buffer, uint6
     bytes_to_commit -= slices[i].len_;
   }
   buffer.commit(slices, num_slices);
+
+  if (!result.ok() && result.err_->getErrorCode() == Api::IoError::IoErrorCode::Again) {
+    appendEvents(Event::FileReadyType::Read);
+  }
   return result;
 }
 
@@ -116,8 +130,16 @@ Api::IoCallUint64Result IoSocketHandleImpl::writev(const Buffer::RawSlice* slice
   if (num_slices_to_write == 0) {
     return Api::ioCallUint64ResultNoError();
   }
-  return sysCallResultToIoCallResult(
+  auto res = sysCallResultToIoCallResult(
       Api::OsSysCallsSingleton::get().writev(fd_, iov.begin(), num_slices_to_write));
+
+  // TODO(davinci26): handle the case where the events are edge based. In that case do not register
+  // again. instead we need to schedule a write event.
+  if (!res.ok() && res.err_->getErrorCode() == Api::IoError::IoErrorCode::Again) {
+    appendEvents(Event::FileReadyType::Write);
+  }
+
+  return res;
 }
 
 Api::IoCallUint64Result IoSocketHandleImpl::write(Buffer::Instance& buffer) {
@@ -126,6 +148,12 @@ Api::IoCallUint64Result IoSocketHandleImpl::write(Buffer::Instance& buffer) {
   Api::IoCallUint64Result result = writev(slices.begin(), slices.size());
   if (result.ok() && result.rc_ > 0) {
     buffer.drain(static_cast<uint64_t>(result.rc_));
+  }
+
+  // TODO(davinci26): handle the case where the events are edge based. In that case do not register
+  // again. instead we need to schedule a write event.
+  if (!result.ok() && result.err_->getErrorCode() == Api::IoError::IoErrorCode::Again) {
+    appendEvents(Event::FileReadyType::Write);
   }
   return result;
 }
@@ -517,11 +545,9 @@ Address::InstanceConstSharedPtr IoSocketHandleImpl::peerAddress() {
   return Address::addressFromSockAddr(ss, ss_len);
 }
 
-Event::FileEventPtr IoSocketHandleImpl::createFileEvent(Event::Dispatcher& dispatcher,
-                                                        Event::FileReadyCb cb,
-                                                        Event::FileTriggerType trigger,
-                                                        uint32_t events) {
-  return dispatcher.createFileEvent(fd_, cb, trigger, events);
+void IoSocketHandleImpl::createFileEvent(Event::Dispatcher& dispatcher, Event::FileReadyCb cb,
+                                         Event::FileTriggerType trigger, uint32_t events) {
+  file_event_ = dispatcher.createFileEvent(fd_, cb, trigger, events);
 }
 
 Api::SysCallIntResult IoSocketHandleImpl::shutdown(int how) {

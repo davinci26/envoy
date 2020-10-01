@@ -25,7 +25,7 @@ static constexpr FileTriggerType PlatformDefaultTriggerType
     // Libevent only supports Level trigger on Windows.
     {FileTriggerType::Level};
 #else
-    {FileTriggerType::Edge};
+    {FileTriggerType::Level};
 #endif
 
 /**
