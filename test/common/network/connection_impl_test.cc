@@ -1002,15 +1002,9 @@ TEST_P(ConnectionImplTest, WriteWithWatermarks) {
   EXPECT_CALL(os_sys_calls, writev(_, _, _))
       .WillOnce(Invoke([&](os_fd_t, const iovec*, int) -> Api::SysCallSizeResult {
         dispatcher_->exit();
+        // Return to default os_sys_calls implementation
+        os_calls.~TestThreadsafeSingletonInjector();
         return {-1, SOCKET_ERROR_AGAIN};
-      }));
-  bool wait = true;
-  ON_CALL(client_callbacks_, onEvent(ConnectionEvent::RemoteClose))
-      .WillByDefault(Invoke([&](Network::ConnectionEvent) -> void { wait = false; }));
-  ON_CALL(server_callbacks_, onEvent(ConnectionEvent::RemoteClose))
-      .WillByDefault(Invoke([&](Network::ConnectionEvent) -> void {
-        wait = false;
-        dispatcher_->exit();
       }));
   // The write() call on the connection will buffer enough data to bring the connection above the
   // high watermark and as the data will not flush it should not return below the watermark.
@@ -1019,14 +1013,11 @@ TEST_P(ConnectionImplTest, WriteWithWatermarks) {
   client_connection_->write(second_buffer_to_write, false);
   dispatcher_->run(Event::Dispatcher::RunType::Block);
 
-  // Return to default os_sys_calls implementation
-  os_calls.~TestThreadsafeSingletonInjector();
-
   // Clean up the connection. The close() (called via disconnect) will attempt to flush. The
   // call to write() will succeed, bringing the connection back under the low watermark.
   EXPECT_CALL(client_callbacks_, onBelowWriteBufferLowWatermark()).Times(1);
 
-  disconnect(wait);
+  disconnect(true);
 }
 
 // Read and write random bytes and ensure we don't encounter issues.
@@ -1048,6 +1039,7 @@ TEST_P(ConnectionImplTest, WatermarkFuzzing) {
   TestThreadsafeSingletonInjector<Api::OsSysCallsImpl> os_calls(&os_sys_calls);
   ON_CALL(os_sys_calls, writev(_, _, _))
       .WillByDefault(Invoke([&](os_fd_t, const iovec*, int) -> Api::SysCallSizeResult {
+        os_calls.~TestThreadsafeSingletonInjector();
         return {-1, SOCKET_ERROR_AGAIN};
       }));
   ON_CALL(*client_write_buffer_, drain(_))
