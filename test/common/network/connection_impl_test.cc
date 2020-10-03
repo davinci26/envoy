@@ -997,8 +997,17 @@ TEST_P(ConnectionImplTest, WriteWithWatermarks) {
   EXPECT_CALL(*client_write_buffer_, move(_))
       .WillRepeatedly(DoAll(AddBufferToStringWithoutDraining(&data_written),
                             Invoke(client_write_buffer_, &MockWatermarkBuffer::baseMove)));
+
   NiceMock<Api::MockOsSysCalls> os_sys_calls;
   TestThreadsafeSingletonInjector<Api::OsSysCallsImpl> os_calls(&os_sys_calls);
+
+  EXPECT_CALL(os_sys_calls, readv(_, _, _))
+      .WillOnce(Invoke([&](os_fd_t fd, const iovec* vec, int l) -> Api::SysCallSizeResult {
+        return os_calls.get_latched_instance()->readv(fd, vec, l);
+      })).WillRepeatedly(Invoke([&](os_fd_t, const iovec*, int) -> Api::SysCallSizeResult {
+          return {-1, SOCKET_ERROR_AGAIN};
+      }));;
+
   EXPECT_CALL(os_sys_calls, writev(_, _, _))
       .WillOnce(Invoke([&](os_fd_t, const iovec*, int) -> Api::SysCallSizeResult {
         dispatcher_->exit();
@@ -1006,6 +1015,9 @@ TEST_P(ConnectionImplTest, WriteWithWatermarks) {
         os_calls.~TestThreadsafeSingletonInjector();
         return {-1, SOCKET_ERROR_AGAIN};
       }));
+
+
+
   // The write() call on the connection will buffer enough data to bring the connection above the
   // high watermark and as the data will not flush it should not return below the watermark.
   EXPECT_CALL(client_callbacks_, onAboveWriteBufferHighWatermark());
@@ -2131,7 +2143,7 @@ TEST_F(PostCloseConnectionImplTest, ReadAfterCloseFlushWriteDelayIgnored) {
 
   // Delayed connection close.
   EXPECT_CALL(dispatcher_, createTimer_(_));
-  EXPECT_CALL(*file_event_, setEnabled(_)); //.Times(3);
+  EXPECT_CALL(*file_event_, setEnabled(_)).Times(2);
   connection_->close(ConnectionCloseType::FlushWriteAndDelay);
 
   // Read event, doRead() happens on connection but no filter onData().
@@ -2159,12 +2171,12 @@ TEST_F(PostCloseConnectionImplTest, ReadAfterCloseFlushWriteDelayIgnoredWithWrit
   // With half-close semantics enabled we will not wait for early close notification.
   // See the `Envoy::Network::ConnectionImpl::readDisable()' method for more details.
   // EXPECT_CALL(*file_event_, setEnabled(0));
-  EXPECT_CALL(*file_event_, setEnabled(_)).Times(3);
+  EXPECT_CALL(*file_event_, setEnabled(_)).Times(2);
   connection_->enableHalfClose(true);
   connection_->close(ConnectionCloseType::FlushWriteAndDelay);
 
   // Read event, doRead() happens on connection but no filter onData().
-  EXPECT_CALL(*read_filter_, onData(_, _)); //.Times(0);
+  EXPECT_CALL(*read_filter_, onData(_, _)).Times(0);
   EXPECT_CALL(*transport_socket_, doRead(_))
       .WillOnce(Invoke([this](Buffer::Instance& buffer) -> IoResult {
         buffer.add(val_.c_str(), val_.size());
@@ -2194,7 +2206,7 @@ TEST_F(PostCloseConnectionImplTest, ReadAfterCloseFlushWriteDelayIgnoredCanFlush
   EXPECT_CALL(dispatcher_, createTimer_(_));
   // EXPECT_CALL(*file_event_, setEnabled(Event::FileReadyType::Write |
   // Event::FileReadyType::Closed));
-  EXPECT_CALL(*file_event_, setEnabled(_)).Times(3);
+  EXPECT_CALL(*file_event_, setEnabled(_)).Times(2);
 
   connection_->close(ConnectionCloseType::FlushWriteAndDelay);
 

@@ -110,9 +110,6 @@ Api::IoCallUint64Result IoSocketHandleImpl::read(Buffer::Instance& buffer, uint6
   }
   buffer.commit(slices, num_slices);
 
-  if (!result.ok() && result.err_->getErrorCode() == Api::IoError::IoErrorCode::Again) {
-    appendEvents(Event::FileReadyType::Read);
-  }
   return result;
 }
 

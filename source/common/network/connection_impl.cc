@@ -477,6 +477,13 @@ void ConnectionImpl::onWriteBufferLowWatermark() {
   ENVOY_CONN_LOG(debug, "onBelowWriteBufferLowWatermark", *this);
   ASSERT(write_buffer_above_high_watermark_);
   write_buffer_above_high_watermark_ = false;
+
+  auto prv_events = ioHandle().getEnabledFileEvents();
+  auto new_events = prv_events & ~Event::FileReadyType::Write;
+  ENVOY_CONN_LOG(debug, "new events {}", *this, new_events);
+
+  ioHandle().enableFileEvents(new_events);
+
   for (ConnectionCallbacks* callback : callbacks_) {
     callback->onBelowWriteBufferLowWatermark();
   }
