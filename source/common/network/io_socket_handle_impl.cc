@@ -481,6 +481,15 @@ Api::SysCallIntResult IoSocketHandleImpl::setBlocking(bool blocking) {
   return Api::OsSysCallsSingleton::get().setsocketblocking(fd_, blocking);
 }
 
+IoHandlePtr IoSocketHandleImpl::deepCopy() {
+  auto result = Api::OsSysCallsSingleton::get().duplicate(fd_);
+  if (result.rc_ == -1) {
+    throw EnvoyException(fmt::format("failedto duplicate the socket '{}': ({}) {}", fd_,
+                                     result.errno_, errorDetails(result.errno_)));
+  }
+  return std::make_unique<IoSocketHandleImpl>(result.rc_, socket_v6only_, domain_);
+}
+
 absl::optional<int> IoSocketHandleImpl::domain() { return domain_; }
 
 Address::InstanceConstSharedPtr IoSocketHandleImpl::localAddress() {

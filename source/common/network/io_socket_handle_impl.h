@@ -70,24 +70,7 @@ public:
   Event::FileEventPtr createManagedFileEvent(Event::Dispatcher& dispatcher, Event::FileReadyCb cb,
                                              Event::FileTriggerType trigger,
                                              uint32_t events) override;
-  std::unique_ptr<IoHandle> deepCopy() {
-    WSAPROTOCOL_INFO info;
-    auto currentProcess = ::GetCurrentProcessId();
-    int rc = WSADuplicateSocket(fd_, currentProcess, &info);
-    if (rc == SOCKET_ERROR) {
-        auto le = GetLastError();
-        ENVOY_LOG_MISC(debug, "{}", le);
-        return nullptr;
-    }
-    int new_socket = ::WSASocket(info.iAddressFamily, info.iSocketType, info.iProtocol, &info, 0, 0);
-    if (SOCKET_INVALID(new_socket)) {
-        auto le = GetLastError();
-        ENVOY_LOG_MISC(debug, "{}", le);
-        return nullptr;
-    }
-    // WSAENOTSOCK handle seperately.
-    return std::make_unique<IoSocketHandleImpl>(new_socket, socket_v6only_, domain_);
-  }
+  IoHandlePtr deepCopy() override;
 
   void activateFileEvents(uint32_t events) override;
   void enableFileEvents(uint32_t events) override;
