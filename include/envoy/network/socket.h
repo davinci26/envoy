@@ -78,6 +78,8 @@ public:
    */
   virtual const IoHandle& ioHandle() const PURE;
 
+  virtual std::unique_ptr<Socket> deepCopy() PURE;
+
   /**
    * @return the type (stream or datagram) of the socket.
    */

@@ -17,6 +17,11 @@ public:
     local_address_ = local_address;
   }
 
+  SocketPtr deepCopy() {
+    auto socket = new SocketImpl(std::move(io_handle_->deepCopy()), local_address_);
+    return SocketPtr{socket};
+  }
+
   IoHandle& ioHandle() override { return *io_handle_; }
   const IoHandle& ioHandle() const override { return *io_handle_; }
   void close() override {
