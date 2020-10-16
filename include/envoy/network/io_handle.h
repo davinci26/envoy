@@ -259,6 +259,7 @@ public:
    */
   virtual Address::InstanceConstSharedPtr peerAddress() PURE;
 
+  virtual std::unique_ptr<IoHandle> deepCopy() PURE;
   /**
    * Initializes the internal file event that will signal when the io handle is readable, writable
    * or closed. Each handle is allowed to have only a single file event. The internal file event is
