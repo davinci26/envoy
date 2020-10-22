@@ -54,6 +54,42 @@
 namespace Envoy {
 namespace Server {
 
+
+BOOL WINAPI CtrlHandler(DWORD fdwCtrlType)
+{
+   //If the function handles the control signal, it should return TRUE.
+   // If it returns FALSE, the next handler function in the list of handlers for this process is used.
+    switch (fdwCtrlType)
+    {
+        // Handle the CTRL-C signal.
+    case CTRL_C_EVENT:
+        ENVOY_LOG(debug, "Ctrl-c caught");
+        return 1;
+
+        // CTRL-CLOSE: confirm that the user wants to exit.
+        // The user closes the entire console.
+    case CTRL_CLOSE_EVENT:
+        ENVOY_LOG(debug, "CTRL_CLOSE_EVENT caught");
+        return 1;
+
+        // Pass other signals to the next handler.
+    case CTRL_BREAK_EVENT:
+        ENVOY_LOG(debug, "CTRL_BREAK_EVENT caught");
+        return FALSE;
+
+    case CTRL_LOGOFF_EVENT:
+        ENVOY_LOG(debug, "CTRL_LOGOFF_EVENT caught");
+        return FALSE;
+
+    case CTRL_SHUTDOWN_EVENT:
+        ENVOY_LOG(debug, "CTRL_SHUTDOWN_EVENT caught");
+        return FALSE;
+
+    default:
+        return FALSE;
+    }
+}
+
 InstanceImpl::InstanceImpl(
     Init::Manager& init_manager, const Options& options, Event::TimeSystem& time_system,
     Network::Address::InstanceConstSharedPtr local_address, ListenerHooks& hooks,
@@ -631,6 +667,8 @@ RunHelper::RunHelper(Instance& instance, const Options& options, Event::Dispatch
     sig_hup_ = dispatcher.listenForSignal(SIGHUP, []() {
       ENVOY_LOG(warn, "caught and eating SIGHUP. See documentation for how to hot restart.");
     });
+#else
+  SetConsoleCtrlHandler(CtrlHandler, 1);
 #endif
   }
 
