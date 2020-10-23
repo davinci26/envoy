@@ -63,26 +63,27 @@ BOOL WINAPI CtrlHandler(DWORD fdwCtrlType)
     {
         // Handle the CTRL-C signal.
     case CTRL_C_EVENT:
-        ENVOY_LOG(debug, "Ctrl-c caught");
+        ENVOY_LOG_MISC(critical, "Ctrl-c caught");
+        PANIC("Ctrl-c caught");
         return 1;
 
         // CTRL-CLOSE: confirm that the user wants to exit.
         // The user closes the entire console.
     case CTRL_CLOSE_EVENT:
-        ENVOY_LOG(debug, "CTRL_CLOSE_EVENT caught");
+        ENVOY_LOG_MISC(critical, "CTRL_CLOSE_EVENT caught");
         return 1;
 
         // Pass other signals to the next handler.
     case CTRL_BREAK_EVENT:
-        ENVOY_LOG(debug, "CTRL_BREAK_EVENT caught");
+        ENVOY_LOG_MISC(critical, "CTRL_BREAK_EVENT caught");
         return FALSE;
 
     case CTRL_LOGOFF_EVENT:
-        ENVOY_LOG(debug, "CTRL_LOGOFF_EVENT caught");
+        ENVOY_LOG_MISC(critical, "CTRL_LOGOFF_EVENT caught");
         return FALSE;
 
     case CTRL_SHUTDOWN_EVENT:
-        ENVOY_LOG(debug, "CTRL_SHUTDOWN_EVENT caught");
+        ENVOY_LOG_MISC(critical, "CTRL_SHUTDOWN_EVENT caught");
         return FALSE;
 
     default:
