@@ -670,6 +670,10 @@ RunHelper::RunHelper(Instance& instance, const Options& options, Event::Dispatch
     });
 #else
   SetConsoleCtrlHandler(CtrlHandler, 1);
+  sigterm_ = dispatcher.listenForSignal(CTRL_C_EVENT, [&instance]() {
+      ENVOY_LOG(warn, "caught CTRL_C_EVENT");
+      instance.shutdown();
+  });
 #endif
   }
 
