@@ -5,7 +5,7 @@ import sys
 
 from yapf.yapflib.yapf_api import FormatFile
 
-EXCLUDE_LIST = ['generated', 'venv']
+EXCLUDE_LIST = ['generated', 'venv', 'bazel-envoy', 'bazel-bin', 'bazel-out']
 
 
 def collectFiles():
@@ -38,20 +38,21 @@ def validateFormat(fix=False):
   failed_update_files = set()
   successful_update_files = set()
   for python_file in collectFiles():
-    reformatted_source, encoding, changed = FormatFile(python_file,
-                                                       style_config='tools/code_format/.style.yapf',
-                                                       in_place=fix,
-                                                       print_diff=not fix)
-    if not fix:
-      fixes_required = True if changed else fixes_required
-      if reformatted_source:
-        print(reformatted_source)
-      continue
-    file_list = failed_update_files if reformatted_source else successful_update_files
-    file_list.add(python_file)
-  if fix:
-    displayFixResults(successful_update_files, failed_update_files)
-    fixes_required = len(failed_update_files) > 0
+    print(python_file)
+  #   reformatted_source, encoding, changed = FormatFile(python_file,
+  #                                                      style_config='tools/code_format/.style.yapf',
+  #                                                      in_place=fix,
+  #                                                      print_diff=not fix)
+  #   if not fix:
+  #     fixes_required = True if changed else fixes_required
+  #     if reformatted_source:
+  #       print(reformatted_source)
+  #     continue
+  #   file_list = failed_update_files if reformatted_source else successful_update_files
+  #   file_list.add(python_file)
+  # if fix:
+  #   displayFixResults(successful_update_files, failed_update_files)
+  #   fixes_required = len(failed_update_files) > 0
   return not fixes_required
 
 
