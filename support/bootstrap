@@ -9,12 +9,13 @@
 # TODO(hausdorff): If compatibility becomes an issue here, come back and do this
 # "the right way". This is hard to do in general, since `realpath` is not
 # standard.
-if [ ! "$PWD" == "$(git rev-parse --show-toplevel)" ]; then
-    cat >&2 <<__EOF__
-ERROR: this script must be run at the root of the envoy source tree
-__EOF__
-    exit 1
-fi
+
+# if [ ! "$PWD" == "$(git rev-parse --show-toplevel)" ]; then
+#     cat >&2 <<__EOF__
+# ERROR: this script must be run at the root of the envoy source tree
+# __EOF__
+#     exit 1
+# fi
 
 # Helper functions that calculate `abspath` and `relpath`. Taken from Mesos
 # commit 82b040a60561cf94dec3197ea88ae15e57bcaa97, which also carries the Apache
