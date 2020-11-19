@@ -13,7 +13,8 @@ WatcherImpl::WatcherImpl(Event::Dispatcher& dispatcher, Api::Api& api)
   Api::SysCallIntResult result = os_sys_calls_.socketpair(AF_INET, SOCK_STREAM, IPPROTO_TCP, socks);
   ASSERT(result.rc_ == 0);
 
-  event_read_ = socks[0];
+  event_read_ = 
+  socks[0];
   event_write_ = socks[1];
   result = os_sys_calls_.setsocketblocking(event_read_, false);
   ASSERT(result.rc_ == 0);
