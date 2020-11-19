@@ -8,7 +8,11 @@ source_venv() {
       virtualenv "${VENV_DIR}"/venv --python=python3
     fi
     # shellcheck disable=SC1090
-    source "${VENV_DIR}/venv/bin/activate"
+    if [[ "$OSTYPE" == "msys" ]]; then
+      source "${VENV_DIR}/venv/Scripts/activate"
+    else
+      source "${VENV_DIR}/venv/bin/activate"
+    fi
   else
     echo "Found existing virtualenv"
   fi

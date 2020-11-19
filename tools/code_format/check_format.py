@@ -206,6 +206,7 @@ class FormatChecker:
     ]
     self.build_fixer_check_excluded_paths = args.build_fixer_check_excluded_paths + [
         "./bazel/external/",
+        "./bazel-bin/external/",
         "./bazel/toolchains/",
         "./bazel/BUILD",
         "./tools/clang_tools",
