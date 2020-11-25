@@ -27,7 +27,7 @@ def envoy_copts(repository, test = False):
         "-Zc:__cplusplus",
         "-DWIN32",
         "-D_WIN32_WINNT=0x0A00",  # _WIN32_WINNT_WIN10
-        "-DNTDDI_VERSION=0x0A000005",  # NTDDI_WIN10_RS4
+        "-DNTDDI_VERSION=0x0A000009",  # NTDDI_WIN10_RS4
         "-DWIN32_LEAN_AND_MEAN",
         "-DNOUSER",
         "-DNOMCX",

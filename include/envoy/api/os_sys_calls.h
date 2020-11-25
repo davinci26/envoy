@@ -17,6 +17,12 @@ struct EnvoyTcpInfo {
   std::chrono::microseconds tcpi_rtt;
 };
 
+struct EnvoyRedirectRecords {
+  
+  unsigned long redirectRecordsSize;
+  void* redirectRecords;
+};
+
 class OsSysCalls {
 public:
   virtual ~OsSysCalls() = default;
