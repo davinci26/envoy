@@ -147,6 +147,16 @@ public:
                                                 socklen_t* optlen) const PURE;
 
   /**
+   * Get the connection redirection records. (@see MSDN SIO_QUERY_WFP_CONNECTION_REDIRECT_CONTEXT)
+   */
+  virtual Api::SysCallIntResult getSocketRedirectionRecord(Network::EnvoyRedirectRecords& redirectRecords) const PURE;
+
+  /**
+   * Set the connection redirection records. (@see MSDN SIO_SET_WFP_CONNECTION_REDIRECT_CONTEXT)
+   */
+  virtual Api::SysCallIntResult setSocketRedirectionRecord(Network::EnvoyRedirectRecords& redirectRecords) const PURE;
+
+  /**
    * Toggle socket blocking state
    */
   virtual Api::SysCallIntResult setBlockingForTest(bool blocking) PURE;

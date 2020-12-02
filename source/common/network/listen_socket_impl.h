@@ -108,6 +108,12 @@ public:
     setLocalAddress(local_address);
     local_address_restored_ = true;
   }
+
+  void restoreLocalAddress(const Network::OriginalDestinationInfo& restored_address_info) override {
+    setLocalAddress(restored_address_info.address);
+    envoy_redirect_records_ = restored_address_info.redirect_records;
+    local_address_restored_ = true;
+  }
   void setRemoteAddress(const Address::InstanceConstSharedPtr& remote_address) override {
     remote_address_ = remote_address;
   }
@@ -144,6 +150,7 @@ protected:
   std::string transport_protocol_;
   std::vector<std::string> application_protocols_;
   std::string server_name_;
+  std::shared_ptr<EnvoyRedirectRecords> envoy_redirect_records_{nullptr};
 };
 
 // ConnectionSocket used with server connections.

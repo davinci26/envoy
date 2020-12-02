@@ -52,6 +52,8 @@ public:
                                         socklen_t optlen) override;
   Api::SysCallIntResult getSocketOption(int level, int optname, void* optval,
                                         socklen_t* optlen) const override;
+  Api::SysCallIntResult getSocketRedirectionRecord(Network::EnvoyRedirectRecords& redirectRecords) const override;
+  Api::SysCallIntResult setSocketRedirectionRecord(Network::EnvoyRedirectRecords& redirectRecords) const override;
   Api::SysCallIntResult setBlockingForTest(bool blocking) override;
 
   const OptionsSharedPtr& options() const override { return options_; }

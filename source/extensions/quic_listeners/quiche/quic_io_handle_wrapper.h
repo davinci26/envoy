@@ -121,6 +121,16 @@ public:
     io_handle_.initializeFileEvent(dispatcher, cb, trigger, events);
   }
 
+  Api::SysCallIntResult
+  getSocketRedirectionRecord(Network::EnvoyRedirectRecords& redirectRecords) override {
+    return io_handle_.getSocketRedirectionRecord(redirectRecords);
+  }
+
+  Api::SysCallIntResult
+  setSocketRedirectionRecord(Network::EnvoyRedirectRecords& redirectRecords) override {
+    return io_handle_.setSocketRedirectionRecord(redirectRecords);
+  }
+
   Network::IoHandlePtr duplicate() override { return io_handle_.duplicate(); }
 
   void activateFileEvents(uint32_t events) override { io_handle_.activateFileEvents(events); }

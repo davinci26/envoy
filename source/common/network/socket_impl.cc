@@ -89,6 +89,15 @@ Api::SysCallIntResult SocketImpl::getSocketOption(int level, int optname, void* 
   return io_handle_->getOption(level, optname, optval, optlen);
 }
 
+Api::SysCallIntResult SocketImpl::getSocketRedirectionRecord(EnvoyRedirectRecords& redirectRecords) const {
+  return io_handle_->getSocketRedirectionRecord(redirectRecords);
+}
+
+Api::SysCallIntResult SocketImpl::setSocketRedirectionRecord(EnvoyRedirectRecords& redirectRecords) const {
+  return io_handle_->setSocketRedirectionRecord(redirectRecords);
+}
+
+
 Api::SysCallIntResult SocketImpl::setBlockingForTest(bool blocking) {
   return io_handle_->setBlocking(blocking);
 }

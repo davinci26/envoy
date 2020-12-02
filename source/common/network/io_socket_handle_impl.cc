@@ -574,6 +574,28 @@ Api::SysCallIntResult IoSocketHandleImpl::getOption(int level, int optname, void
   return Api::OsSysCallsSingleton::get().getsockopt(fd_, level, optname, optval, optlen);
 }
 
+Api::SysCallIntResult
+IoSocketHandleImpl::getSocketRedirectionRecord(EnvoyRedirectRecords& redirectRecords) {
+#ifdef SIO_QUERY_WFP_CONNECTION_REDIRECT_RECORDS
+  return Api::OsSysCallsSingleton::get().genericIoctl(
+      fd_, SIO_QUERY_WFP_CONNECTION_REDIRECT_RECORDS, NULL, 0,
+      redirectRecords.redirectRecordsBuffer, sizeof(redirectRecords.redirectRecordsBuffer),
+      redirectRecords.redirectRecordsBufferSize);
+#endif
+  return Api::SysCallIntResult{0, 0};
+}
+
+Api::SysCallIntResult
+IoSocketHandleImpl::setSocketRedirectionRecord(EnvoyRedirectRecords& redirectRecords) {
+#ifdef SIO_SET_WFP_CONNECTION_REDIRECT_RECORDS
+  return Api::OsSysCallsSingleton::get().genericIoctl(
+      fd_, SIO_SET_WFP_CONNECTION_REDIRECT_RECORDS, NULL, 0,
+      redirectRecords.redirectRecordsBuffer, sizeof(redirectRecords.redirectRecordsBuffer),
+      redirectRecords.redirectRecordsBufferSize);
+#endif
+  return Api::SysCallIntResult{0, 0};
+}
+
 Api::SysCallIntResult IoSocketHandleImpl::setBlocking(bool blocking) {
   return Api::OsSysCallsSingleton::get().setsocketblocking(fd_, blocking);
 }

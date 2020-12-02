@@ -234,9 +234,10 @@ public:
    * The address (IP and port) may be not local and the port may differ from
    * the listener port if the packets were redirected using iptables
    * @param sock is accepted socket
+   * @param redirectInfo also query for the redirect info (Win32 only)
    * @return the original destination or nullptr if not available.
    */
-  static Address::InstanceConstSharedPtr getOriginalDst(Socket& sock);
+  static std::optional<OriginalDestinationInfo> getOriginalDst(Socket& sock, bool redirectInfo);
 
   /**
    * Parses a string containing a comma-separated list of port numbers and/or

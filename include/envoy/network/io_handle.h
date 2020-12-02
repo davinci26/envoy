@@ -26,6 +26,16 @@ using RawSliceArrays = absl::FixedArray<absl::FixedArray<Buffer::RawSlice>>;
 
 namespace Network {
 
+struct EnvoyRedirectRecords {
+  unsigned long redirectRecordsBufferSize;
+  void* redirectRecordsBuffer[256];
+};
+
+struct OriginalDestinationInfo {
+  Address::InstanceConstSharedPtr address;
+  std::shared_ptr<EnvoyRedirectRecords> redirect_records;
+};
+
 /**
  * IoHandle: an abstract interface for all I/O operations
  */
@@ -311,6 +321,18 @@ public:
    *  returned.
    */
   virtual absl::optional<std::chrono::milliseconds> lastRoundTripTime() PURE;
+
+  /**
+   * Get the connection redirection records. (@see MSDN SIO_QUERY_WFP_CONNECTION_REDIRECT_CONTEXT)
+   */
+  virtual Api::SysCallIntResult
+  getSocketRedirectionRecord(EnvoyRedirectRecords& redirectRecords) PURE;
+
+  /**
+   * Set the connection redirection records. (@see MSDN SIO_SET_WFP_CONNECTION_REDIRECT_CONTEXT)
+   */
+  virtual Api::SysCallIntResult
+  setSocketRedirectionRecord(EnvoyRedirectRecords& redirectRecords) PURE;
 };
 
 using IoHandlePtr = std::unique_ptr<IoHandle>;

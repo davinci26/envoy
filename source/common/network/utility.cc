@@ -368,16 +368,16 @@ Address::InstanceConstSharedPtr Utility::getAddressWithPort(const Address::Insta
   NOT_REACHED_GCOVR_EXCL_LINE;
 }
 
-Address::InstanceConstSharedPtr Utility::getOriginalDst(Socket& sock) {
+std::optional<OriginalDestinationInfo> Utility::getOriginalDst(Socket& sock, [[maybe_unused]] bool redirectInfo) {
 #ifdef SOL_IP
 
   if (sock.addressType() != Address::Type::Ip) {
-    return nullptr;
+    return {};
   }
 
   auto ipVersion = sock.ipVersion();
   if (!ipVersion.has_value()) {
-    return nullptr;
+    return {};
   }
 
   sockaddr_storage orig_addr;
@@ -392,15 +392,28 @@ Address::InstanceConstSharedPtr Utility::getOriginalDst(Socket& sock) {
   }
 
   if (status != 0) {
-    return nullptr;
+    return {};
   }
 
-  return Address::addressFromSockAddr(orig_addr, 0, true /* default for v6 constructor */);
+  std::shared_ptr<EnvoyRedirectRecords> redirect_records;
+#ifdef SIO_QUERY_WFP_CONNECTION_REDIRECT_RECORDS
+    if (redirectInfo) {
+    redirect_records = std::make_unique<EnvoyRedirectRecords>();
+    status = sock.getSocketRedirectionRecord(*redirect_records).rc_;
+    if (status != 0) {
+      return {};
+    }
+  }
+#endif
+
+  return OriginalDestinationInfo{
+      Address::addressFromSockAddr(orig_addr, 0, true /* default for v6 constructor */),
+      std::move(redirect_records)};
 #else
   // TODO(zuercher): determine if connection redirection is possible under macOS (c.f. pfctl and
   // divert), and whether it's possible to find the learn destination address.
   UNREFERENCED_PARAMETER(sock);
-  return nullptr;
+  return {};
 #endif
 }
 

@@ -365,6 +365,16 @@ void ConnectionHandlerImpl::ActiveTcpSocket::newConnection() {
     new_listener = listener_.parent_.findActiveTcpListenerByAddress(*socket_->localAddress());
   }
   if (new_listener.has_value()) {
+#ifdef SIO_QUERY_WFP_CONNECTION_REDIRECT_RECORDS
+    if (listener_.config_->direction() == envoy::config::core::v3::OUTBOUND) {
+      Network::EnvoyRedirectRecords redirect_records;
+      auto status = socket_->getSocketRedirectionRecord(redirect_records).rc_;
+      if (status != 0) {
+        ENVOY_LOG_MISC(warn, "bad stuff");
+      }
+    }
+#endif
+
     // Hands off connections redirected by iptables to the listener associated with the
     // original destination address. Pass 'hand_off_restored_destination_connections' as false to
     // prevent further redirection as well as 'rebalanced' as true since the connection has
