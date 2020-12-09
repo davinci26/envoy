@@ -1,12 +1,10 @@
 #pragma once
 
-#include "exe/service_status.h"
-
 #include <functional>
 #include <string>
 
-#include <iostream>
-#include <fstream>
+#include "exe/service_status.h"
+#include "envoy/event/signal.h"
 
 namespace Envoy {
 class ServiceBase {
@@ -21,7 +19,7 @@ public:
   DWORD Start(std::vector<std::string> args, DWORD control);
   void Stop(DWORD control);
 
-  void UpdateState(DWORD state, HRESULT errorCode = S_OK);
+  void UpdateState(DWORD state, HRESULT errorCode = S_OK, bool serviceError = true);
 
 private:
   void SetServiceStatus();
@@ -33,7 +31,6 @@ private:
   static ServiceBase* service_static;
   SERVICE_STATUS_HANDLE handle_;
   ServiceStatus status_;
-  std::wstring serviceName_;
-  bool result_;
+  Event::SignalEventPtr sigterm_;
 };
 } // namespace Envoy
