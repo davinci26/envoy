@@ -139,8 +139,13 @@ TcpConnPool::TcpConnPool(const std::string& cluster_name, Upstream::ClusterManag
                          Upstream::LoadBalancerContext* context,
                          Tcp::ConnectionPool::UpstreamCallbacks& upstream_callbacks)
     : upstream_callbacks_(upstream_callbacks) {
-  conn_pool_ = cluster_manager.tcpConnPoolForCluster(cluster_name,
-                                                     Upstream::ResourcePriority::Default, context);
+  // TODO(mattklein123): Pass thread local cluster into this function, removing an additional
+  // map lookup and moving the error handling closer to the source (where it is likely already
+  // done).
+  const auto thread_local_cluster = cluster_manager.getThreadLocalCluster(cluster_name);
+  if (thread_local_cluster != nullptr) {
+    conn_pool_ = thread_local_cluster->tcpConnPool(Upstream::ResourcePriority::Default, context);
+  }
 }
 
 TcpConnPool::~TcpConnPool() {
@@ -186,8 +191,14 @@ HttpConnPool::HttpConnPool(const std::string& cluster_name,
                            Tcp::ConnectionPool::UpstreamCallbacks& upstream_callbacks,
                            Http::CodecClient::Type type)
     : hostname_(config.hostname()), type_(type), upstream_callbacks_(upstream_callbacks) {
-  conn_pool_ = cluster_manager.httpConnPoolForCluster(
-      cluster_name, Upstream::ResourcePriority::Default, absl::nullopt, context);
+  // TODO(mattklein123): Pass thread local cluster into this function, removing an additional
+  // map lookup and moving the error handling closer to the source (where it is likely already
+  // done).
+  const auto thread_local_cluster = cluster_manager.getThreadLocalCluster(cluster_name);
+  if (thread_local_cluster != nullptr) {
+    conn_pool_ = thread_local_cluster->httpConnPool(Upstream::ResourcePriority::Default,
+                                                    absl::nullopt, context);
+  }
 }
 
 HttpConnPool::~HttpConnPool() {
@@ -220,7 +231,7 @@ void HttpConnPool::onPoolFailure(ConnectionPool::PoolFailureReason reason, absl:
 
 void HttpConnPool::onPoolReady(Http::RequestEncoder& request_encoder,
                                Upstream::HostDescriptionConstSharedPtr host,
-                               const StreamInfo::StreamInfo& info) {
+                               const StreamInfo::StreamInfo& info, absl::optional<Http::Protocol>) {
   upstream_handle_ = nullptr;
   Http::RequestEncoder* latched_encoder = &request_encoder;
   upstream_->setRequestEncoder(request_encoder,
