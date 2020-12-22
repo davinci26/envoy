@@ -11,7 +11,7 @@ namespace ListenerFilters {
 namespace OriginalDst {
 
 std::optional<Network::OriginalDestinationInfo> OriginalDstFilter::getOriginalDst(Network::Socket& sock) {
-  return Network::Utility::getOriginalDst(sock);
+  return Network::Utility::getOriginalDst(sock, true);
 }
 
 Network::FilterStatus OriginalDstFilter::onAccept(Network::ListenerFilterCallbacks& cb) {
