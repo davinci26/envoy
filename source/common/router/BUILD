@@ -311,6 +311,7 @@ envoy_cc_library(
         "//source/common/common:minimal_logger_lib",
         "//source/common/common:scope_tracker",
         "//source/common/common:utility_lib",
+        "//source/common/network:socket_option_factory_lib",
         "//source/common/grpc:common_lib",
         "//source/common/http:codes_lib",
         "//source/common/http:header_map_lib",

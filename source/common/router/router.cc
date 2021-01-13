@@ -41,6 +41,8 @@
 #include "common/tracing/http_tracer_impl.h"
 
 #include "extensions/filters/http/well_known_names.h"
+#include "common/network/socket_option_factory.h"
+
 
 namespace Envoy {
 namespace Router {
@@ -491,6 +493,15 @@ Http::FilterHeadersStatus Filter::decodeHeaders(Http::RequestHeaderMap& headers,
 
   transport_socket_options_ = Network::TransportSocketOptionsUtility::fromFilterState(
       *callbacks_->streamInfo().filterState());
+  
+  Network::Socket::appendOptions(upstream_options_, callbacks_->getUpstreamSocketOptions());
+  if (downstreamConnection()->streamInfo().getRedirectRecords().has_value()) {
+    auto val = downstreamConnection()->streamInfo().getRedirectRecords().value().foobar;
+    ENVOY_LOG_MISC(debug, "=============== {} ==============", val);
+    const Network::Socket::OptionsSharedPtr wfp_socket_options = Network::SocketOptionFactory::buildWFPRedirectRecordsOptions();
+    Network::Socket::appendOptions(upstream_options_, wfp_socket_options);
+  }
+   
   std::unique_ptr<GenericConnPool> generic_conn_pool = createConnPool();
 
   if (!generic_conn_pool) {

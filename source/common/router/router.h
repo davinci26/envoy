@@ -378,8 +378,11 @@ public:
   }
 
   Network::Socket::OptionsSharedPtr upstreamSocketOptions() const override {
-    return callbacks_->getUpstreamSocketOptions();
+    return upstream_options_;
   }
+
+  Network::Socket::OptionsSharedPtr upstream_options_ =
+      std::make_shared<Network::Socket::Options>();
 
   Network::TransportSocketOptionsSharedPtr upstreamTransportSocketOptions() const override {
     return transport_socket_options_;
