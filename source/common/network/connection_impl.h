@@ -65,6 +65,7 @@ public:
   void close(ConnectionCloseType type) final;
   std::string nextProtocol() const override { return transport_socket_->protocol(); }
   void noDelay(bool enable) override;
+  void setSocketRedirectionRecord(EnvoyRedirectRecords& records) override;
   void readDisable(bool disable) override;
   void detectEarlyCloseWhenReadDisabled(bool value) override { detect_early_close_ = value; }
   bool readEnabled() const override;

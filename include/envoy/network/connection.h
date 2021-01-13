@@ -160,6 +160,11 @@ public:
   virtual void noDelay(bool enable) PURE;
 
   /**
+   * Set EnvoyRedirectRecords& records
+   */
+  virtual void setSocketRedirectionRecord(EnvoyRedirectRecords& records) PURE;
+
+  /**
    * Disable socket reads on the connection, applying external back pressure. When reads are
    * enabled again if there is data still in the input buffer it will be re-dispatched through
    * the filter chain.

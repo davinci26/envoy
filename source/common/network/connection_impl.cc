@@ -67,7 +67,7 @@ ConnectionImpl::ConnectionImpl(Event::Dispatcher& dispatcher, ConnectionSocketPt
       write_end_stream_(false), current_write_end_stream_(false), dispatch_buffered_data_(false),
       transport_wants_read_(false) {
 
-  if (!connected) {
+ if (!connected) {
     connecting_ = true;
   }
 
@@ -243,6 +243,12 @@ void ConnectionImpl::closeSocket(ConnectionEvent close_type) {
 
   // Call the base class directly as close() is called in the destructor.
   ConnectionImpl::raiseEvent(close_type);
+}
+
+void ConnectionImpl::setSocketRedirectionRecord(Network::EnvoyRedirectRecords& records) {
+  Api::SysCallIntResult result = ioHandle().setSocketRedirectionRecord(records);
+  RELEASE_ASSERT(result.rc_ == 0, fmt::format("Failed to set redirect records with error {}, {}",
+                                              result.errno_, errorDetails(result.errno_)));
 }
 
 void ConnectionImpl::noDelay(bool enable) {

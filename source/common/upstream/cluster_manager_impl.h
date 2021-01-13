@@ -416,6 +416,7 @@ private:
       LoadBalancerPtr lb_;
       ClusterInfoConstSharedPtr cluster_info_;
       Http::AsyncClientImpl http_async_client_;
+      std::string foo{};
     };
 
     using ClusterEntryPtr = std::unique_ptr<ClusterEntry>;

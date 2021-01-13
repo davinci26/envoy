@@ -1196,15 +1196,15 @@ void ClusterManagerImpl::ThreadLocalClusterManagerImpl::updateClusterMembership(
     const HostVector& hosts_removed, uint64_t overprovisioning_factor) {
   ASSERT(thread_local_clusters_.find(name) != thread_local_clusters_.end());
   const auto& cluster_entry = thread_local_clusters_[name];
-  ENVOY_LOG(debug, "membership update for TLS cluster {} added {} removed {}", name,
-            hosts_added.size(), hosts_removed.size());
+  // ENVOY_LOG(debug, "membership update for TLS cluster {} added {} removed {}", name,
+  //           hosts_added.size(), hosts_removed.size());
   cluster_entry->priority_set_.updateHosts(priority, std::move(update_hosts_params),
                                            std::move(locality_weights), hosts_added, hosts_removed,
                                            overprovisioning_factor);
 
   // If an LB is thread aware, create a new worker local LB on membership changes.
   if (cluster_entry->lb_factory_ != nullptr) {
-    ENVOY_LOG(debug, "re-creating local LB for TLS cluster {}", name);
+    // ENVOY_LOG(debug, "re-creating local LB for TLS cluster {}", name);
     cluster_entry->lb_ = cluster_entry->lb_factory_->create();
   }
 }
@@ -1429,16 +1429,36 @@ ClusterManagerImpl::ThreadLocalClusterManagerImpl::ClusterEntry::tcpConnPool(
   // This allows socket options to control connection pooling so that connections with
   // different options are not pooled together.
   bool have_options = false;
-  if (context != nullptr && context->downstreamConnection()) {
-    const Network::ConnectionSocket::OptionsSharedPtr& options =
-        context->downstreamConnection()->socketOptions();
-    if (options) {
-      for (const auto& option : *options) {
-        have_options = true;
-        option->hashKey(hash_key);
+  Network::Socket::OptionsSharedPtr upstream_options(std::make_shared<Network::Socket::Options>());
+  if (context != nullptr ) {
+    // const Network::ConnectionSocket::OptionsSharedPtr& options;
+    // if (context->downstreamConnection()) {
+    //     context->downstreamConnection()->socketOptions();
+    // }
+    // if (options) {
+    //   for (const auto& option : *options) {
+    //     have_options = true;
+    //     option->hashKey(hash_key);
+    //   }
+    // }
+    if (context) {
+      // Inherit socket options from downstream connection, if set.
+      if (context->downstreamConnection()) {
+        addOptionsIfNotNull(upstream_options, context->downstreamConnection()->socketOptions());
       }
+      addOptionsIfNotNull(upstream_options, context->upstreamSocketOptions());
     }
+
+    // Use the socket options for computing connection pool hash key, if any.
+    // This allows socket options to control connection pooling so that connections with
+    // different options are not pooled together.
+    for (const auto& option : *upstream_options) {
+      option->hashKey(hash_key);
+      have_options = true;
+    }
+
   }
+
 
   bool have_transport_socket_options = false;
   if (context != nullptr && context->upstreamTransportSocketOptions() != nullptr) {
@@ -1450,7 +1470,7 @@ ClusterManagerImpl::ThreadLocalClusterManagerImpl::ClusterEntry::tcpConnPool(
   if (!container.pools_[hash_key]) {
     container.pools_[hash_key] = parent_.parent_.factory_.allocateTcpConnPool(
         parent_.thread_local_dispatcher_, host, priority,
-        have_options ? context->downstreamConnection()->socketOptions() : nullptr,
+        have_options ? upstream_options : nullptr,
         have_transport_socket_options ? context->upstreamTransportSocketOptions() : nullptr,
         parent_.cluster_manager_state_);
   }

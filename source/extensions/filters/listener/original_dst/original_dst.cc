@@ -3,7 +3,10 @@
 #include "envoy/network/listen_socket.h"
 
 #include "common/common/assert.h"
+#include "common/network/socket_option_factory.h"
 #include "common/network/utility.h"
+
+// #include "extensions/filters/common/original_src/socket_option_factory.h"
 
 namespace Envoy {
 namespace Extensions {
@@ -11,7 +14,7 @@ namespace ListenerFilters {
 namespace OriginalDst {
 
 std::optional<Network::OriginalDestinationInfo> OriginalDstFilter::getOriginalDst(Network::Socket& sock) {
-  return Network::Utility::getOriginalDst(sock, true);
+  return Network::Utility::getOriginalDst(sock, false);
 }
 
 Network::FilterStatus OriginalDstFilter::onAccept(Network::ListenerFilterCallbacks& cb) {
@@ -20,7 +23,11 @@ Network::FilterStatus OriginalDstFilter::onAccept(Network::ListenerFilterCallbac
 
   if (socket.addressType() == Network::Address::Type::Ip) {
     auto original_destination_info = getOriginalDst(socket);
-
+    if (original_destination_info) {
+      ENVOY_LOG(debug, "original_dst: Original destination is {}", original_destination_info.value().address);
+    } else {
+      ENVOY_LOG(debug, "original_dst: Failed to found original destination");
+    }
     // A listener that has the use_original_dst flag set to true can still receive
     // connections that are NOT redirected using iptables. If a connection was not redirected,
     // the address returned by getOriginalDst() matches the local address of the new socket.

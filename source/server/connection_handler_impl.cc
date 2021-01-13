@@ -363,18 +363,9 @@ void ConnectionHandlerImpl::ActiveTcpSocket::newConnection() {
   if (hand_off_restored_destination_connections_ && socket_->localAddressRestored()) {
     // Find a listener associated with the original destination address.
     new_listener = listener_.parent_.findActiveTcpListenerByAddress(*socket_->localAddress());
+    auto options_to_add = std::make_shared<Network::Socket::Options>();
   }
   if (new_listener.has_value()) {
-#ifdef SIO_QUERY_WFP_CONNECTION_REDIRECT_RECORDS
-    if (listener_.config_->direction() == envoy::config::core::v3::OUTBOUND) {
-      Network::EnvoyRedirectRecords redirect_records;
-      auto status = socket_->getSocketRedirectionRecord(redirect_records).rc_;
-      if (status != 0) {
-        ENVOY_LOG_MISC(warn, "bad stuff");
-      }
-    }
-#endif
-
     // Hands off connections redirected by iptables to the listener associated with the
     // original destination address. Pass 'hand_off_restored_destination_connections' as false to
     // prevent further redirection as well as 'rebalanced' as true since the connection has
@@ -489,6 +480,22 @@ void ConnectionHandlerImpl::ActiveTcpListener::newConnection(
 
   auto transport_socket = filter_chain->transportSocketFactory().createTransportSocket(nullptr);
   stream_info->setDownstreamSslConnection(transport_socket->ssl());
+
+  absl::optional<Network::EnvoyRedirectRecords> redirect_records;
+#ifdef SIO_QUERY_WFP_CONNECTION_REDIRECT_RECORDS
+    if (config_->direction() == envoy::config::core::v3::OUTBOUND && socket->localAddressRestored()) {
+      Network::EnvoyRedirectRecords redirect_records;
+      ENVOY_LOG_MISC(debug, "Querying for redirect record for outbound listener");
+      auto status = socket->getSocketRedirectionRecord(redirect_records).rc_;
+      if (status != 0) {
+        ENVOY_LOG(debug, "closing connection: cannot broker connection to original destination [Query redirect record failed]");
+        // return;
+      }
+      redirect_records.foobar = "I win";
+      stream_info->setRedirectRecords(redirect_records);
+    }
+#endif
+
   auto& active_connections = getOrCreateActiveConnections(*filter_chain);
   auto server_conn_ptr = parent_.dispatcher_.createServerConnection(
       std::move(socket), std::move(transport_socket), *stream_info);
@@ -496,6 +503,7 @@ void ConnectionHandlerImpl::ActiveTcpListener::newConnection(
       timeout != std::chrono::milliseconds::zero()) {
     server_conn_ptr->setTransportSocketConnectTimeout(timeout);
   }
+  ENVOY_LOG_MISC(debug, "Before connect is called");
   ActiveTcpConnectionPtr active_connection(
       new ActiveTcpConnection(active_connections, std::move(server_conn_ptr),
                               parent_.dispatcher_.timeSource(), std::move(stream_info)));

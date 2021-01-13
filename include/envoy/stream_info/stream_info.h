@@ -609,6 +609,10 @@ public:
    * @param id Connection ID of the downstream connection.
    **/
   virtual void setConnectionID(uint64_t id) PURE;
+
+  virtual absl::optional<Network::EnvoyRedirectRecords> getRedirectRecords() const PURE;
+
+  virtual void setRedirectRecords(Network::EnvoyRedirectRecords& records) PURE;
 };
 
 } // namespace StreamInfo

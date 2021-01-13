@@ -18,6 +18,7 @@ public:
 
   // Network::ListenerFilter
   Network::FilterStatus onAccept(Network::ListenerFilterCallbacks& cb) override;
+
 };
 
 } // namespace OriginalDst

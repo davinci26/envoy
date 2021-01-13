@@ -42,6 +42,10 @@ public:
   void noDelay(bool /*enable*/) override {
     // No-op. TCP_NODELAY doesn't apply to UDP.
   }
+  
+  void setSocketRedirectionRecord(Network::EnvoyRedirectRecords&) override {
+    NOT_REACHED_GCOVR_EXCL_LINE;
+  }
   void readDisable(bool /*disable*/) override { NOT_REACHED_GCOVR_EXCL_LINE; }
   void detectEarlyCloseWhenReadDisabled(bool /*value*/) override { NOT_REACHED_GCOVR_EXCL_LINE; }
   bool readEnabled() const override { return true; }

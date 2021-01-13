@@ -556,16 +556,18 @@ IoHandlePtr IoSocketHandleImpl::accept(struct sockaddr* addr, socklen_t* addrlen
   if (SOCKET_INVALID(result.rc_)) {
     return nullptr;
   }
-
+  ENVOY_LOG_MISC(debug, "Accepting from listener {} -> {}", fd_, result.rc_);
   return std::make_unique<IoSocketHandleImpl>(result.rc_, socket_v6only_, domain_);
 }
 
 Api::SysCallIntResult IoSocketHandleImpl::connect(Address::InstanceConstSharedPtr address) {
+  ENVOY_LOG_MISC(debug, "Connecting to socket {}", fd_);
   return Api::OsSysCallsSingleton::get().connect(fd_, address->sockAddr(), address->sockAddrLen());
 }
 
 Api::SysCallIntResult IoSocketHandleImpl::setOption(int level, int optname, const void* optval,
                                                     socklen_t optlen) {
+  ENVOY_LOG_MISC(debug, "Setting socket option in connection {} optname {}", fd_, optname);
   return Api::OsSysCallsSingleton::get().setsockopt(fd_, level, optname, optval, optlen);
 }
 
@@ -577,6 +579,7 @@ Api::SysCallIntResult IoSocketHandleImpl::getOption(int level, int optname, void
 Api::SysCallIntResult
 IoSocketHandleImpl::getSocketRedirectionRecord(EnvoyRedirectRecords& redirectRecords) {
 #ifdef SIO_QUERY_WFP_CONNECTION_REDIRECT_RECORDS
+  ENVOY_LOG_MISC(debug, "Query redirect records for socket {}", fd_);
   return Api::OsSysCallsSingleton::get().genericIoctl(
       fd_, SIO_QUERY_WFP_CONNECTION_REDIRECT_RECORDS, NULL, 0,
       redirectRecords.redirectRecordsBuffer, sizeof(redirectRecords.redirectRecordsBuffer),

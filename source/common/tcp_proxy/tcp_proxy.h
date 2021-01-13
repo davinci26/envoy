@@ -281,6 +281,13 @@ public:
     return transport_socket_options_;
   }
 
+  Network::Socket::OptionsSharedPtr upstreamSocketOptions() const override {
+    return upstream_options_;
+  }
+
+  Network::Socket::OptionsSharedPtr upstream_options_ =
+      std::make_shared<Network::Socket::Options>();
+
   // These two functions allow enabling/disabling reads on the upstream and downstream connections.
   // They are called by the Downstream/Upstream Watermark callbacks to limit buffering.
   void readDisableUpstream(bool disable);

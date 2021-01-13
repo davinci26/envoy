@@ -142,6 +142,7 @@ TcpConnPool::TcpConnPool(const std::string& cluster_name, Upstream::ClusterManag
   // TODO(mattklein123): Pass thread local cluster into this function, removing an additional
   // map lookup and moving the error handling closer to the source (where it is likely already
   // done).
+  ENVOY_LOG(debug, "========= Constructing the  TcpConnPool ===========");
   const auto thread_local_cluster = cluster_manager.getThreadLocalCluster(cluster_name);
   if (thread_local_cluster != nullptr) {
     conn_pool_ = thread_local_cluster->tcpConnPool(Upstream::ResourcePriority::Default, context);

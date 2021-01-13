@@ -107,6 +107,7 @@ protected:
       uint64_t id() const override { return 12345; }
       void hashKey(std::vector<uint8_t>&) const override {}
       std::string nextProtocol() const override { return EMPTY_STRING; }
+      void setSocketRedirectionRecord(Network::EnvoyRedirectRecords&) override { NOT_IMPLEMENTED_GCOVR_EXCL_LINE; }
       void noDelay(bool) override { NOT_IMPLEMENTED_GCOVR_EXCL_LINE; }
       void readDisable(bool) override {}
       void detectEarlyCloseWhenReadDisabled(bool) override { NOT_IMPLEMENTED_GCOVR_EXCL_LINE; }

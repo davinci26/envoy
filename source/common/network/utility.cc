@@ -396,13 +396,15 @@ std::optional<OriginalDestinationInfo> Utility::getOriginalDst(Socket& sock, [[m
   socklen_t addr_len = sizeof(sockaddr_storage);
   int status;
 
+  Api::SysCallIntResult result;
   if (*ipVersion == Address::IpVersion::v4) {
-    status = sock.getSocketOption(SOL_IP, SO_ORIGINAL_DST, &orig_addr, &addr_len).rc_;
+    result = sock.getSocketOption(SOL_IP, SO_ORIGINAL_DST, &orig_addr, &addr_len);
   } else {
-    status = sock.getSocketOption(SOL_IPV6, IP6T_SO_ORIGINAL_DST, &orig_addr, &addr_len).rc_;
+    result = sock.getSocketOption(SOL_IPV6, IP6T_SO_ORIGINAL_DST, &orig_addr, &addr_len);
   }
 
-  if (status != 0) {
+  if (result.rc_ != 0) {
+    ENVOY_LOG_MISC(debug, "original_dst: Failed to found original destination with error {}", result.errno_);
     return {};
   }
 
@@ -416,13 +418,13 @@ std::optional<OriginalDestinationInfo> Utility::getOriginalDst(Socket& sock, [[m
     }
   }
 #endif
-
   return OriginalDestinationInfo{
       Address::addressFromSockAddr(orig_addr, 0, true /* default for v6 constructor */),
       std::move(redirect_records)};
 #else
   // TODO(zuercher): determine if connection redirection is possible under macOS (c.f. pfctl and
   // divert), and whether it's possible to find the learn destination address.
+  static_assert(1 == 0);
   UNREFERENCED_PARAMETER(sock);
   return {};
 #endif

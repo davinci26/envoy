@@ -29,6 +29,7 @@ namespace Network {
 struct EnvoyRedirectRecords {
   unsigned long redirectRecordsBufferSize;
   void* redirectRecordsBuffer[256];
+  std::string foobar{"123"};
 };
 
 struct OriginalDestinationInfo {

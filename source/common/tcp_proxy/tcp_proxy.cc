@@ -27,6 +27,7 @@
 #include "common/network/transport_socket_options_impl.h"
 #include "common/network/upstream_server_name.h"
 #include "common/router/metadatamatchcriteria_impl.h"
+#include "common/network/socket_option_factory.h"
 
 namespace Envoy {
 namespace TcpProxy {
@@ -430,8 +431,16 @@ Network::FilterStatus Filter::initializeUpstreamConnection() {
           StreamInfo::FilterState::StateType::ReadOnly,
           StreamInfo::FilterState::LifeSpan::Connection);
     }
-    transport_socket_options_ = Network::TransportSocketOptionsUtility::fromFilterState(
+    transport_socket_options_ =  Network::TransportSocketOptionsUtility::fromFilterState(
         downstreamConnection()->streamInfo().filterState());
+
+    if (downstreamConnection()->streamInfo().getRedirectRecords().has_value()) {
+      auto val = downstreamConnection()->streamInfo().getRedirectRecords().value().foobar;
+      ENVOY_LOG_MISC(debug, "=============== {} ==============", val);
+      const Network::Socket::OptionsSharedPtr wfp_socket_options = Network::SocketOptionFactory::buildWFPRedirectRecordsOptions();
+      Network::Socket::appendOptions(upstream_options_, wfp_socket_options);
+    }
+    // upstream_options_ = socket_options;
   }
 
   if (!maybeTunnel(*thread_local_cluster, cluster_name)) {
