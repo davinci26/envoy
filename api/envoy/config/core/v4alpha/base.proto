@@ -341,6 +341,9 @@ message DataSource {
 
     // String inlined in the configuration.
     string inline_string = 3;
+
+    // Windows certificate store data source.
+    string windows_certificate_store = 4;
   }
 }
 
