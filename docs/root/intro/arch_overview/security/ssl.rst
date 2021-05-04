@@ -86,6 +86,8 @@ does on standard Debian installations. Common paths for system CA bundles on Lin
 * /etc/ssl/ca-bundle.pem (OpenSUSE)
 * /usr/local/etc/ssl/cert.pem (FreeBSD)
 * /etc/ssl/cert.pem (OpenBSD)
+* On Windows the system CA bundle is stored on the `Windows Certificate Store <https://docs.microsoft.com/en-us/windows-hardware/drivers/install/certificate-stores>`_.
+  You will need to `export the certificate to a file <https://docs.microsoft.com/en-us/azure/application-gateway/mutual-authentication-certificate-management>`_.
 
 See the reference for :ref:`UpstreamTlsContexts <envoy_v3_api_msg_extensions.transport_sockets.tls.v3.UpstreamTlsContext>` and
 :ref:`DownstreamTlsContexts <envoy_v3_api_msg_extensions.transport_sockets.tls.v3.DownstreamTlsContext>` for other TLS options.
