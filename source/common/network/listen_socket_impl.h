@@ -59,7 +59,9 @@ public:
       RELEASE_ASSERT(io_handle_->isOpen(), "");
       setPrebindSocketOptions();
       setupSocket(options);
+      ENVOY_LOG_MISC(info, "binding for socket");
     } else {
+      ENVOY_LOG_MISC(info, "not binding for socket");
       // If the tcp listener does not bind to port, we test that the ip family is supported.
       if (auto ip = address->ip(); ip != nullptr) {
         RELEASE_ASSERT(

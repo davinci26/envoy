@@ -524,10 +524,12 @@ bool IoSocketHandleImpl::supportsUdpGro() const {
 }
 
 Api::SysCallIntResult IoSocketHandleImpl::bind(Address::InstanceConstSharedPtr address) {
+  ENVOY_LOG_MISC(info, fmt::format("Binding socket {}", fd_));
   return Api::OsSysCallsSingleton::get().bind(fd_, address->sockAddr(), address->sockAddrLen());
 }
 
 Api::SysCallIntResult IoSocketHandleImpl::listen(int backlog) {
+  ENVOY_LOG_MISC(info, fmt::format("Listening socket {}", fd_));
   return Api::OsSysCallsSingleton::get().listen(fd_, backlog);
 }
 
@@ -570,6 +572,7 @@ IoHandlePtr IoSocketHandleImpl::duplicate() {
   auto result = Api::OsSysCallsSingleton::get().duplicate(fd_);
   RELEASE_ASSERT(result.rc_ != -1, fmt::format("duplicate failed for '{}': ({}) {}", fd_,
                                                result.errno_, errorDetails(result.errno_)));
+  ENVOY_LOG_MISC(info, fmt::format("Duplicating socket {} -> {}",fd_, result.rc_));
   return std::make_unique<IoSocketHandleImpl>(result.rc_, socket_v6only_, domain_);
 }
 
