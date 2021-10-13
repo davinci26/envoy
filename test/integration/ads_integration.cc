@@ -43,10 +43,6 @@ envoy::config::cluster::v3::Cluster AdsIntegrationTest::buildTlsCluster(const st
   return ConfigHelper::buildTlsCluster(name, "ROUND_ROBIN");
 }
 
-envoy::config::cluster::v3::Cluster AdsIntegrationTest::buildRedisCluster(const std::string& name) {
-  return ConfigHelper::buildCluster(name, "MAGLEV");
-}
-
 envoy::config::endpoint::v3::ClusterLoadAssignment
 AdsIntegrationTest::buildClusterLoadAssignment(const std::string& name) {
   return ConfigHelper::buildClusterLoadAssignment(
@@ -85,26 +81,6 @@ AdsIntegrationTest::buildListener(const std::string& name, const std::string& ro
                                   const std::string& stat_prefix) {
   return ConfigHelper::buildListener(
       name, route_config, Network::Test::getLoopbackAddressString(ipVersion()), stat_prefix);
-}
-
-envoy::config::listener::v3::Listener
-AdsIntegrationTest::buildRedisListener(const std::string& name, const std::string& cluster) {
-  std::string redis = fmt::format(
-      R"EOF(
-        filters:
-        - name: redis
-          typed_config:
-            "@type": type.googleapis.com/envoy.extensions.filters.network.redis_proxy.v3.RedisProxy
-            settings:
-              op_timeout: 1s
-            stat_prefix: {}
-            prefix_routes:
-              catch_all_route:
-                cluster: {}
-    )EOF",
-      name, cluster);
-  return ConfigHelper::buildBaseListener(name, Network::Test::getLoopbackAddressString(ipVersion()),
-                                         redis);
 }
 
 envoy::config::route::v3::RouteConfiguration

@@ -6,7 +6,8 @@
 #include "source/common/common/macros.h"
 #include "source/extensions/filters/network/redis_proxy/command_splitter_impl.h"
 
-#include "test/integration/ads_integration.h"
+// #include "test/integration/ads_integration.h"
+#include "test/integration/http_integration.h"
 #include "test/integration/integration.h"
 
 using testing::Return;
@@ -626,7 +627,84 @@ TEST_P(RedisClusterWithRefreshIntegrationTest, ClusterSlotRequestAfterFailure) {
   redis_client->close();
 }
 
-using RedisAdsIntegrationTest = AdsIntegrationTest;
+class RedisAdsIntegrationTest : public Grpc::DeltaSotwIntegrationParamTest,
+                                public HttpIntegrationTest {
+public:
+  RedisAdsIntegrationTest()
+      : HttpIntegrationTest(Http::CodecType::HTTP2, ipVersion(),
+                            ConfigHelper::adsBootstrap(
+                                sotwOrDelta() == Grpc::SotwOrDelta::Sotw ? "GRPC" : "DELTA_GRPC")) {
+    use_lds_ = false;
+    create_xds_upstream_ = true;
+    tls_xds_upstream_ = true;
+    sotw_or_delta_ = sotwOrDelta();
+    setUpstreamProtocol(Http::CodecType::HTTP2);
+  }
+
+  void TearDown() override { cleanUpXdsConnection(); }
+
+  void initialize() override {
+    config_helper_.addConfigModifier([this](envoy::config::bootstrap::v3::Bootstrap& bootstrap) {
+      auto* ads_config = bootstrap.mutable_dynamic_resources()->mutable_ads_config();
+      auto* grpc_service = ads_config->add_grpc_services();
+      setGrpcService(*grpc_service, "ads_cluster", xds_upstream_->localAddress());
+      auto* ads_cluster = bootstrap.mutable_static_resources()->add_clusters();
+      ads_cluster->MergeFrom(bootstrap.static_resources().clusters()[0]);
+      ads_cluster->set_name("ads_cluster");
+      envoy::extensions::transport_sockets::tls::v3::UpstreamTlsContext context;
+      auto* validation_context = context.mutable_common_tls_context()->mutable_validation_context();
+      validation_context->mutable_trusted_ca()->set_filename(
+          TestEnvironment::runfilesPath("test/config/integration/certs/upstreamcacert.pem"));
+      validation_context->add_match_subject_alt_names()->set_suffix("lyft.com");
+      if (clientType() == Grpc::ClientType::GoogleGrpc) {
+        auto* google_grpc = grpc_service->mutable_google_grpc();
+        auto* ssl_creds = google_grpc->mutable_channel_credentials()->mutable_ssl_credentials();
+        ssl_creds->mutable_root_certs()->set_filename(
+            TestEnvironment::runfilesPath("test/config/integration/certs/upstreamcacert.pem"));
+      }
+      ads_cluster->mutable_transport_socket()->set_name("envoy.transport_sockets.tls");
+      ads_cluster->mutable_transport_socket()->mutable_typed_config()->PackFrom(context);
+    });
+    HttpIntegrationTest::initialize();
+    if (xds_stream_ == nullptr) {
+      createXdsConnection();
+      AssertionResult result = xds_connection_->waitForNewStream(*dispatcher_, xds_stream_);
+      RELEASE_ASSERT(result, result.message());
+      xds_stream_->startGrpcStream();
+    }
+  }
+
+  envoy::config::cluster::v3::Cluster buildRedisCluster(const std::string& name) {
+    return ConfigHelper::buildCluster(name, "MAGLEV");
+  }
+
+  envoy::config::listener::v3::Listener buildRedisListener(const std::string& name,
+                                                           const std::string& cluster) {
+    std::string redis = fmt::format(
+        R"EOF(
+        filters:
+        - name: redis
+          typed_config:
+            "@type": type.googleapis.com/envoy.extensions.filters.network.redis_proxy.v3.RedisProxy
+            settings:
+              op_timeout: 1s
+            stat_prefix: {}
+            prefix_routes:
+              catch_all_route:
+                cluster: {}
+    )EOF",
+        name, cluster);
+    return ConfigHelper::buildBaseListener(
+        name, Network::Test::getLoopbackAddressString(ipVersion()), redis);
+  }
+
+  envoy::config::endpoint::v3::ClusterLoadAssignment
+  buildClusterLoadAssignment(const std::string& name) {
+    return ConfigHelper::buildClusterLoadAssignment(
+        name, Network::Test::getLoopbackAddressString(ipVersion()),
+        fake_upstreams_[0]->localAddress()->ip()->port());
+  }
+};
 
 // Validates that removing a redis cluster does not crash Envoy.
 // Regression test for issue https://github.com/envoyproxy/envoy/issues/7990.
@@ -661,8 +739,8 @@ TEST_P(RedisAdsIntegrationTest, RedisClusterRemoval) {
 
   // Now send a CDS update, removing redis cluster added above.
   sendDiscoveryResponse<envoy::config::cluster::v3::Cluster>(
-      Config::TypeUrl::get().Cluster, {buildCluster("cluster_2")}, {buildCluster("cluster_2")},
-      {"redis_cluster"}, "2");
+      Config::TypeUrl::get().Cluster, {ConfigHelper::buildCluster("cluster_2", "ROUND_ROBIN")},
+      {ConfigHelper::buildCluster("cluster_2", "ROUND_ROBIN")}, {"redis_cluster"}, "2");
 
   // Validate that the cluster is removed successfully.
   test_server_->waitForCounterGe("cluster_manager.cluster_removed", 1);

@@ -26,8 +26,6 @@ public:
 
   envoy::config::cluster::v3::Cluster buildTlsCluster(const std::string& name);
 
-  envoy::config::cluster::v3::Cluster buildRedisCluster(const std::string& name);
-
   envoy::config::endpoint::v3::ClusterLoadAssignment
   buildClusterLoadAssignment(const std::string& name);
 
@@ -43,9 +41,6 @@ public:
   envoy::config::listener::v3::Listener buildListener(const std::string& name,
                                                       const std::string& route_config,
                                                       const std::string& stat_prefix = "ads_test");
-
-  envoy::config::listener::v3::Listener buildRedisListener(const std::string& name,
-                                                           const std::string& cluster);
 
   envoy::config::route::v3::RouteConfiguration buildRouteConfig(const std::string& name,
                                                                 const std::string& cluster);
