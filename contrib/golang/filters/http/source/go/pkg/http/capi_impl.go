@@ -223,6 +223,29 @@ func (c *httpCApiImpl) HttpGetIntegerValue(r unsafe.Pointer, id int) (uint64, bo
 	return value, true
 }
 
+func (c *httpCApiImpl) HttpGetDynamicMetadata(r unsafe.Pointer, filterName string) chan map[string]interface{} {
+	ch := make(chan map[string]interface{}, 1)
+	hand := func(bPtr unsafe.Pointer, sz int) {
+		sliceHeader := &reflect.SliceHeader{
+			Data: uintptr(bPtr),
+			Len:  sz,
+			Cap:  sz,
+		}
+		buf := *(*[]byte)(unsafe.Pointer(sliceHeader))
+		if len(buf) == 0 {
+			ch <- map[string]interface{}{}
+			return
+		}
+		// copy the memory from c to Go.
+		var meta structpb.Struct
+		proto.Unmarshal(buf, &meta)
+		ch <- meta.AsMap()
+	}
+	res := C.envoyGoFilterHttpGetDynamicMetadata(r, unsafe.Pointer(&filterName), unsafe.Pointer(&hand))
+	handleCApiStatus(res)
+	return ch
+}
+
 func (c *httpCApiImpl) HttpSetDynamicMetadata(r unsafe.Pointer, filterName string, key string, value interface{}) {
 	v, err := structpb.NewValue(value)
 	if err != nil {

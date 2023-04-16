@@ -913,6 +913,40 @@ CAPIStatus Filter::getStringValue(int id, GoString* value_str) {
   return CAPIStatus::CAPIOK;
 }
 
+CAPIStatus Filter::getDynamicMetadata(std::string filter_name, GoFunction hand) {
+  Thread::LockGuard lock(mutex_);
+  if (has_destroyed_) {
+    ENVOY_LOG(debug, "golang filter has been destroyed");
+    return CAPIStatus::CAPIFilterIsDestroy;
+  }
+
+  auto& state = getProcessorState();
+  if (!state.isProcessingInGo()) {
+    ENVOY_LOG(debug, "golang filter is not processing Go");
+    return CAPIStatus::CAPINotInGo;
+  }
+
+  ENVOY_LOG(debug, "------------------------------> Moment of truth {}", filter_name);
+  auto dlib = Dso::DsoManager<Dso::HttpFilterDsoImpl>::getDsoByID(config_->soId());
+  ASSERT(dlib != nullptr, "load at the config parse phase, so it should not be null");
+  if (!state.isThreadSafe()) {
+    // TODO: handle this case
+    ASSERT(false);
+    // dlib->envoyGoCallback(hand, nullptr, 0);
+  }
+  const auto& metadata = state.streamInfo().dynamicMetadata().filter_metadata();
+  const auto filter_it = metadata.find(filter_name);
+  if (filter_it != metadata.end()) {
+    filter_it->second.SerializeToString(&req_->strValue);
+    dlib->envoyGoCallback(hand, req_->strValue.data(), req_->strValue.length());
+  } else {
+    dlib->envoyGoCallback(hand, nullptr, 0);
+  }
+
+  return CAPIStatus::CAPIOK;
+}
+
+
 CAPIStatus Filter::setDynamicMetadata(std::string filter_name, std::string key,
                                       absl::string_view buf) {
   Thread::LockGuard lock(mutex_);

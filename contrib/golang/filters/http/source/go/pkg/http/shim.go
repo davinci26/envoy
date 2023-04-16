@@ -37,6 +37,7 @@ import (
 	"fmt"
 	"runtime"
 	"sync"
+	"unsafe"
 
 	"github.com/envoyproxy/envoy/contrib/golang/filters/http/source/go/pkg/api"
 )
@@ -221,4 +222,10 @@ func envoyGoFilterOnHttpDestroy(r *C.httpRequest, reason uint64) {
 		runtime.SetFinalizer(req, nil)
 		req.Finalize(api.GCFinalize)
 	}
+}
+
+//export envoyGoCallback
+func envoyGoCallback(hand unsafe.Pointer, args unsafe.Pointer, sz int) {
+	f := *(*func(unsafe.Pointer, int))(hand)
+	f(args, sz)
 }

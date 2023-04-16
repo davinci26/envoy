@@ -109,6 +109,11 @@ func (f *filter) decodeHeaders(header api.RequestHeaderMap, endStream bool) api.
 	if found {
 		md := f.callbacks.StreamInfo().DynamicMetadata()
 		md.Set("filter.go", "foo", "bar")
+		ch := md.Get("filter.go")
+		metadata := <-ch
+		for i, t := range metadata {
+			f.callbacks.Log(api.Error, fmt.Sprintf("Got key:%v, data:%v", i, t))
+		}
 	}
 
 	if strings.Contains(f.localreplay, "decode-header") {

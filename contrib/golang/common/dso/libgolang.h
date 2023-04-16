@@ -73,9 +73,10 @@ typedef char // NOLINT(modernize-use-using)
 #ifndef GO_CGO_GOSTRING_TYPEDEF
 typedef _GoString_ GoString; // NOLINT(modernize-use-using)
 #endif
-typedef void* GoMap;  // NOLINT(modernize-use-using)
-typedef void* GoChan; // NOLINT(modernize-use-using)
-typedef struct {      // NOLINT(modernize-use-using)
+typedef void* GoMap;      // NOLINT(modernize-use-using)
+typedef void* GoChan;     // NOLINT(modernize-use-using)
+typedef void* GoFunction; // NOLINT(modernize-use-using)
+typedef struct {          // NOLINT(modernize-use-using)
   void* t;
   void* v;
 } GoInterface;
@@ -127,6 +128,12 @@ extern GoUint64 envoyGoFilterOnHttpData(httpRequest* r,
 // go:linkname envoyGoFilterOnHttpDestroy
 // github.com/envoyproxy/envoy/contrib/golang/filters/http/source/go/pkg/http.envoyGoFilterOnHttpDestroy
 extern void envoyGoFilterOnHttpDestroy(httpRequest* r, GoUint64 reason);
+
+// go:linkname envoyGoCallback
+// github.com/envoyproxy/envoy/contrib/golang/filters/http/source/go/pkg/http.envoyGoCallback
+extern void envoyGoCallback(GoFunction* func, // NOLINT(readability-identifier-naming)
+                            void* data,       // NOLINT(readability-identifier-naming)
+                            GoInt sz);        // NOLINT(readability-identifier-naming)
 
 // go:linkname envoyGoOnClusterSpecify
 // github.com/envoyproxy/envoy/contrib/golang/router/cluster_specifier/source/go/pkg/cluster_specifier.envoyGoOnClusterSpecify
