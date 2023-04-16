@@ -946,7 +946,6 @@ CAPIStatus Filter::getDynamicMetadata(std::string filter_name, GoFunction hand) 
   return CAPIStatus::CAPIOK;
 }
 
-
 CAPIStatus Filter::setDynamicMetadata(std::string filter_name, std::string key,
                                       absl::string_view buf) {
   Thread::LockGuard lock(mutex_);
