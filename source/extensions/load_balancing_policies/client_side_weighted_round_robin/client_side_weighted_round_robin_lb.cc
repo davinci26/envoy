@@ -118,7 +118,7 @@ bool ClientSideWeightedRoundRobinLoadBalancer::updateWeightsOnHosts(const HostVe
       weights.push_back(new_weight);
       if (new_weight != host_ptr->weight()) {
         host_ptr->weight(new_weight);
-        ENVOY_LOG(trace, "updateWeights hostWeight {} = {}", getHostAddress(host_ptr.get()),
+        ENVOY_LOG(info, "updateWeights hostWeight {} = {}", getHostAddress(host_ptr.get()),
                   host_ptr->weight());
         weights_updated = true;
       }
@@ -149,7 +149,7 @@ bool ClientSideWeightedRoundRobinLoadBalancer::updateWeightsOnHosts(const HostVe
     for (const auto& host_ptr : hosts_with_default_weight) {
       if (default_weight != host_ptr->weight()) {
         host_ptr->weight(default_weight);
-        ENVOY_LOG(trace, "updateWeights default hostWeight {} = {}", getHostAddress(host_ptr.get()),
+        ENVOY_LOG(info, "updateWeights default hostWeight {} = {}", getHostAddress(host_ptr.get()),
                   host_ptr->weight());
         weights_updated = true;
       }
@@ -162,7 +162,7 @@ void ClientSideWeightedRoundRobinLoadBalancer::addClientSideLbPolicyDataToHosts(
     const HostVector& hosts) {
   for (const auto& host_ptr : hosts) {
     if (!host_ptr->lbPolicyData().has_value()) {
-      ENVOY_LOG(trace, "Adding LB policy data to Host {}", getHostAddress(host_ptr.get()));
+      ENVOY_LOG(info, "Adding LB policy data to Host {}", getHostAddress(host_ptr.get()));
       host_ptr->setLbPolicyData(std::make_unique<ClientSideHostLbPolicyData>(report_handler_));
     }
   }
@@ -179,7 +179,7 @@ ClientSideWeightedRoundRobinLoadBalancer::getClientSideWeightIfValidFromHost(
     const Host& host, MonotonicTime max_non_empty_since, MonotonicTime min_last_update_time) {
   auto client_side_data = host.typedLbPolicyData<ClientSideHostLbPolicyData>();
   if (!client_side_data.has_value()) {
-    ENVOY_LOG(trace, "Host does not have ClientSideHostLbPolicyData {}", getHostAddress(&host));
+    ENVOY_LOG(info, "Host does not have ClientSideHostLbPolicyData {}", getHostAddress(&host));
     return std::nullopt;
   }
   return client_side_data->getWeightIfValid(max_non_empty_since, min_last_update_time);

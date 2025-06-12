@@ -81,7 +81,7 @@ public:
     // Limiting the number of picks, as over 400M picks should be sufficient
     // for most scenarios.
     picks = picks % 429496729; // % UINT_MAX/10
-    EDF_TRACE("Creating an EDF-scheduler with {} weights and {} pre-picks.", entries.size(), picks);
+    ENVOY_LOG_MISC(info, "Creating an EDF-scheduler with {} weights and {} pre-picks.", entries.size(), picks);
     // Assume no non-positive weights.
     ASSERT(std::none_of(entries.cbegin(), entries.cend(),
                         [&calculate_weight](const std::shared_ptr<C>& entry) {

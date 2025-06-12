@@ -274,6 +274,9 @@ public:
    */
   virtual uint32_t weight() const PURE;
 
+
+  virtual bool hasWeight() const PURE;
+
   /**
    * Set the current load balancing weight of the host, in the range 1-128 (see
    * envoy.api.v2.endpoint.Endpoint.load_balancing_weight).

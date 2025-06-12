@@ -425,6 +425,7 @@ public:
     return Host::HealthStatus(eds_health_status_.load());
   }
 
+  bool hasWeight() const override { return has_weight_; }
   uint32_t weight() const override { return weight_; }
   void weight(uint32_t new_weight) override;
   bool used() const override { return handle_count_ > 0; }
@@ -453,6 +454,7 @@ private:
 
   std::atomic<uint32_t> health_flags_{};
   std::atomic<uint32_t> weight_;
+  bool has_weight_{};
   bool disable_active_health_check_;
   // TODO(wbpcode): should we store the EDS health status to health_flags_ to get unified status or
   // flag access? May be we could refactor HealthFlag to contain all these statuses and flags in the

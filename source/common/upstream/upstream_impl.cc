@@ -642,7 +642,15 @@ Host::CreateConnectionData HostImplBase::createConnection(
   return {std::move(connection), std::move(host)};
 }
 
-void HostImplBase::weight(uint32_t new_weight) { weight_ = std::max(1U, new_weight); }
+void HostImplBase::weight(uint32_t new_weight) {
+  if (new_weight != 0) {
+    has_weight_ = true;
+  }
+
+  auto address_str = "N/A";
+  ENVOY_LOG(info, "Setting weight for host {} from {} to {}" , address_str, weight(), new_weight);
+  weight_ = std::max(1U, new_weight);
+}
 
 absl::StatusOr<std::unique_ptr<HostImpl>> HostImpl::create(
     ClusterInfoConstSharedPtr cluster, const std::string& hostname,

@@ -63,6 +63,7 @@ EdsClusterImpl::~EdsClusterImpl() {
 void EdsClusterImpl::startPreInit() { subscription_->start({edsServiceName()}); }
 
 void EdsClusterImpl::BatchUpdateHelper::batchUpdate(PrioritySet::HostUpdateCb& host_update_cb) {
+  ENVOY_LOG(info, "updating cluster '{}'", parent_.info_->name());
   absl::flat_hash_set<std::string> all_new_hosts;
   PriorityStateManager priority_state_manager(parent_, parent_.local_info_, &host_update_cb,
                                               parent_.random_);
@@ -439,7 +440,11 @@ bool EdsClusterImpl::updateHostsPerLocality(
     priority_state_manager.updateClusterPrioritySet(
         priority, std::move(current_hosts_copy), hosts_added, hosts_removed, absl::nullopt,
         weighted_priority_health, overprovisioning_factor);
+
+    ENVOY_LOG(info, "EDS cluster: {}, changed", info_->name());
     return true;
+  } else {
+    ENVOY_LOG(info, "EDS cluster: {}, unchanged", info_->name());
   }
   return false;
 }
